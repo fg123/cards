@@ -13,7 +13,7 @@ let errorTimer = undefined;
 
 const ERROR_TIMEOUT = 1000;
 
-const TEST_AUTO_JOIN = true;
+const TEST_AUTO_JOIN = false;
 
 updateHand();
 $('#game').hide();
