@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "generic cards server",
   "scripts": {
-    "start": "node main.js",
+    "prod": "node main.js",
     "dev": "nodemon main.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
