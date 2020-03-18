@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
 	<head>
-		<title>Tractor Game</title>
+		<title>Cards Game</title>
 
 		<link href="/static/bootstrap.css" rel="stylesheet" type="text/css">
 		<link href="/static/animate.css" rel="stylesheet" type="text/css">
@@ -32,34 +32,45 @@
 		</div>
 		<div class="game" id="game">
 			<div class="scoreboard">
-				<h4>You are Spectating</h4>
-				<div class="roomStatus">&nbsp;</div>
-				<div class="cta btn btn-lg">
-					Queue for Next Game
-				</div>
-				<div class="start btn btn-lg">
-					Start Game
-				</div>
-			</div>
-			<div class="playHistory">
+				<div class="players">
 
+				</div>
+				<div>
+					<br>
+					<button onclick="emit('server.reset')">Reset Server</button>
+					<br>
+					<br>
+					<select id="deckSelect">
+						<option value="1dnj">1 Deck No Joker</option>
+						<option value="1d">1 Deck</option>
+						<option value="2d">2 Decks</option>
+					</select>
+					<input type="checkbox" id="shuffleCheckbox" value="shuffle" checked> Shuffle?
+					<button onclick="emit('server.setDeck', {
+						deck: DeckLookup[document.getElementById('deckSelect').value],
+						shuffle: document.getElementById('shuffleCheckbox').checked
+					})">Set Deck</button>
+					<br>
+					<br>
+					Deal <input type="number" min=0 placeholder="0" style="width: 50px" id="dealCount"> cards to:
+					<br>
+					<div class="dealPlayers">
+
+					</div>
+					<button onclick="dealCards()">Deal Cards</button>
+				</div>
 			</div>
-			<div class="myOptions options">
-				<div class="errorMessage"></div>
-				<button class="btn btn-lg btn-danger play-cards">Play Cards ➤</button>
-			</div>
-			<div class="flipCard options">
-				<button class="btn btn-lg btn-red flip-diamonds">&diams;</button>
-				<button class="btn btn-lg btn-black flip-clubs">&clubs;</button>
-				<button class="btn btn-lg btn-red flip-hearts">&hearts;</button>
-				<button class="btn btn-lg btn-black flip-spades">&spades;</button>
-				<button class="btn btn-lg btn-black flip-joker">&#129313;</button>
+			<div class="field">
+				
 			</div>
 			<div class="me">
 				<div class="card back">
 					&nbsp;
 				</div>
 				<div class="card hearts">
+					<div class="value">
+						8 <br> &hearts;
+					</div>
 					<div class="value">
 						8 <br> &hearts;
 					</div>
@@ -80,7 +91,7 @@
 		<script src="id.js"></script>
 		<script src="/static/jquery.min.js"></script>
 		<script src="/socket.io/socket.io.js"></script>
-		<script src="/static/spectator_state.js"></script>
+		<script src="/static/deckLookup.js"></script>
 		<script src="/static/game.js"></script>
   </body>
 </html>

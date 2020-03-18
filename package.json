@@ -1,7 +1,7 @@
 {
-  "name": "tractor-game",
+  "name": "cards-game",
   "version": "0.0.1",
-  "description": "based on the chinese game",
+  "description": "generic cards server",
   "scripts": {
     "start": "node main.js",
     "dev": "nodemon main.js",

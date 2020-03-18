@@ -32,11 +32,11 @@ div.card {
 	border-radius: 8px;
 	width: 90px;
 	height: 130px;
-	background: #f2f7ff;
-	padding: 8px;
+	border: 2px solid black;
+	background: #f2f7ff;	
 	font-size: 20px;
 	line-height: 0.7em;
-	box-shadow: 0 0 10px 2px #EEE;
+	box-shadow: 0 0 5px 1px #EEE;
 	cursor: default;
 	position: absolute;
 	-webkit-transition: all 100ms;
@@ -85,22 +85,29 @@ div.game {
 }
 
 div.card .suit {
-	margin-top: 30px;
+	margin-top: 55px;
 	width: 100%;
 	text-align: center;
-	font-size: 110px;
+	font-size: 80px;
 }
 
 div.sJoker .suit, div.bJoker .suit {
 	font-size: 60px;
-	margin-left: -3px;
 }
 
 div.card .value {
-	width: 10%;
-	text-align: center;
+	text-align: left;
+	top: 8px;
+	position: absolute;
+	left: 6px;
 }
 
+div.card .valueBr {
+	position: absolute;
+	right: 6px;
+	bottom: 8px;
+	text-align: right;
+}
 .sJoker {
 	background: url("images/sJoker.png") repeat repeat !important;
 }
@@ -110,27 +117,18 @@ div.card .value {
 }
 
 div.card.back {
-	background: url("images/back.png") repeat repeat;
+	background: url("images/back.png") repeat repeat !important;
 }
 
-div.playHistory div.wrapper {
-	display: inline-block;
-	padding-left: 10px;
-	padding-right: 10px;
-}
-
-div.playHistory {
-	max-height: calc(100% - 300px);
-    overflow: auto;
-}
-
-div.playHistory div.wrapper div.name {
-	font-size: 14px;
-	color: white;
-	padding-top: 10px;
-	padding-bottom: 20px;
-	text-align: center;
-	width: 100%;
+div.field {
+	position: absolute;
+	top: 50%;
+	left: 40%;
+	margin: -400px 0 0 -600px;
+	width: 1200px;
+	height: 800px;
+	background: url("images/texture.jpg") repeat;
+    overflow: none;
 }
 
 div.me {
@@ -144,51 +142,10 @@ div.me {
 	height: 150px;
 }
 
-.cta {
-    background: #aaaa00;
-    border: inset 10px #cccc00;
-    color: #000;
-}
-
-.cta:hover {
-    background: #cccc00;
-    border-color: #dddd00;
-}
-
-.start {
-    background: #008800;
-    border: inset 10px #00aa00;
-}
-
-.start:hover {
-    background: #00aa00;
-    border-color: #00cc00;
-}
-
 div.player {
 	color: #FFF;
 	padding: 10px;
 	font-weight: bold;
-}
-
-div.playingField {
-	height: 150px;
-	margin-left: auto;
-	margin-right: auto;
-	position: relative;
-}
-
-div.errorMessage {
-	color: #FFF;
-	font-weight: bold;
-	padding: 10px;
-}
-
-div.options {
-	width: 100%;
-	position: absolute;
-	bottom: 200px;
-	text-align: center;
 }
 
 div.scoreboard {
@@ -201,14 +158,4 @@ div.scoreboard {
 	border-radius: 10px;
 	padding: 8px;
 	z-index: 10;
-}
-
-.btn-black, .btn-black:hover {
-	background: #FFF;
-	color: #000;
-}
-
-.btn-red, .btn-red:hover {
-	background: #FFF;
-	color: red;
 }

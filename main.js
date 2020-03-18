@@ -60,26 +60,32 @@ io.on('connection', function (socket) {
 		players[socket.id] = player;
 	});
 
-	socket.on('server.play_cards', function (data) {
-		rooms[data.room].play(players[socket.id].name, data.cards);
+	socket.on('server.placeCard', function (data) {
+		rooms[data.room].placeCard(players[socket.id].name, data.card, data.location, data.facedown);
 	});
 
-	socket.on('server.queue', function (data) {
-		if (!rooms[data.room].queue(players[socket.id].name)) {
-			socket.emit('client.error', { error: 'Too many people!' });
-		}
+	socket.on('server.moveCard', function (data) {
+		rooms[data.room].moveCard(data.id, data.location);
 	});
 
-	socket.on('server.unqueue', function (data) {
-		rooms[data.room].unqueue(players[socket.id].name);
+	socket.on('server.reset', function (data) {
+		rooms[data.room].reset();
 	});
 
-	socket.on('server.start', function (data) {
-		if (rooms[data.room].getAdmin() === players[socket.id].name) {
-			if (rooms[data.room].canStartGame()) {
-				rooms[data.room].startGame();
-			}
-		}
+	socket.on('server.setDeck', function (data) {
+		rooms[data.room].setDeck(data.deck, data.shuffle);
+	});
+
+	socket.on('server.takeCard', function (data) {
+		rooms[data.room].takeCard(players[socket.id].name, data.id);
+	});
+
+	socket.on('server.flipCard', function (data) {
+		rooms[data.room].flipCard(data.id);
+	});
+
+	socket.on('server.deal', function (data) {
+		rooms[data.room].deal(data.cards, data.order);
 	});
 
     socket.on('disconnect', function () {

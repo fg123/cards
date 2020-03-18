@@ -1,5 +1,4 @@
 const socket = io();
-const spectatorState = new SpectatorState();
 let myName = '';
 let myId = '';
 let players = [];
@@ -7,7 +6,7 @@ let gamePlaying = false;
 let currentTurn = false;
 let cardHand = [];
 let mainCard = '5D';
-let cardsToPlay = [];
+let selectedCard = undefined;
 let flipStatus = 0;
 const errorQueue = [];
 let errorTimer = undefined;
@@ -18,7 +17,7 @@ const TEST_AUTO_JOIN = true;
 
 updateHand();
 $('#game').hide();
-$('.flipCard').hide();
+
 function emit(endpoint, data) {
     if (!data) data = {};
     console.log('Emitting ' + endpoint);
@@ -44,52 +43,119 @@ $('#joinGameBtn').click(function () {
 	}
 });
 
-$('.play-cards').click(function () {
-	console.log('Playing cards', cardsToPlay, cardHand.filter((v, i) => cardsToPlay[i]));
-	emit('server.play_cards', {
-		cards: cardHand.filter((v, i) => cardsToPlay[i])
-	});
-});
-
-$('.cta').click(function(e) {
-	spectatorState.onCtaButtonClick(myName);
-});
-
-$('.start.btn').click(function(e) {
-	spectatorState.onStartButtonClicked(myName);
-});
-
 if (TEST_AUTO_JOIN) {
 	$('#nickname').val(Date.now());
 	$('#joinGameBtn').click();
 }
 
+let dealCards = () => {};
+
+$('.field').mousedown((e) => {
+	if (selectedCard !== undefined) {
+		const x = e.pageX - $('.field').offset().left;
+		const y = e.pageY - $('.field').offset().top;
+		if (typeof selectedCard === 'string') {
+			// Placing a card from your hand
+			emit('server.placeCard', {
+				card: selectedCard,
+				location: { x, y },
+				facedown: event.which === 3
+			});
+		} else if (typeof selectedCard === 'number') {
+			// Placing a card picked up on the field
+			emit('server.moveCard', {
+				id: selectedCard,
+				location: { x, y }
+			});
+		}
+		selectedCard = undefined;
+	}
+});
+
+$('.field').contextmenu(function() { return false });
+
 socket.on('client.spectator', function (data) {
-	console.log(data);
-	spectatorState.updateSpectatorState(data);
-	$('.roomStatus').html(spectatorState.getStatusDisplay());
-	$('.title h1').text(spectatorState.getTitleText());
-	$('.cta').text(spectatorState.getCtaButtonText(myName));
-	$('.playerStatus h4').text(spectatorState.getStatusText(myName));
-	if (spectatorState.shouldShowStartbutton(myName)) {
-		$('.start.btn').show();
-	} else {
-		$('.start.btn').hide();
+	$('.scoreboard .players').html(`
+			<b>Playing:</b>
+			<br>
+			${data.players
+                .map(p => p.name + " (" + p.score + ")")
+                .join('<br>')}
+			<br><br>
+			Server Deck Count: ${data.deckCount}
+			<br>
+	`);
+	$('.field').html('');
+	for (let i = 0; i < data.field.length; i++) {
+		let card = $(createCard(data.field[i].card, i, 0, i));
+		if (data.field[i].facedown) {
+			card = $(`<div class='card back' data-id='${i}'>&nbsp;</div>`)
+		}
+		// So it captures the right number in the closure.
+		card[0].style.position = "absolute";
+		card[0].style.top = data.field[i].y + "px";
+		card[0].style.left = data.field[i].x + "px";
+		card.mousedown((e) => {
+			if (e.which === 1) {
+				selectedCard = i;
+			}
+			else if (selectedCard === undefined) {
+				if (e.which === 2) {
+					emit('server.takeCard', {
+						id: i
+					});
+				}
+				else if (e.which === 3) {
+					emit('server.flipCard', {
+						id: i
+					});
+				}
+			}
+			e.stopPropagation();
+        	return false;
+		});
+		$('.field').append(card);
 	}
-	if (TEST_AUTO_JOIN && !window.__cta__test_clicked) {
-		window.__cta__test_clicked = true;
-		$('.cta').click();
+	// Save checkbox for deal cards
+	const checkMapping = {};
+	for (let i = 0; i < data.players.length; i++) {
+		if (document.getElementById(data.players[i].name + 'DealCheckbox') && 
+			!document.getElementById(data.players[i].name + 'DealCheckbox').checked) {
+			checkMapping[data.players[i].name] = "";
+		}
+		else {
+			checkMapping[data.players[i].name] = "checked";
+		}
 	}
+	$('.scoreboard .dealPlayers').html(`
+		${data.players
+			.map(p => '<input type="checkbox" id="' + p.name + 'DealCheckbox" value="shuffle" ' + checkMapping[p.name] + '>' + p.name)
+			.join('<br>')}
+	`);
+	dealCards = () => {
+		let dealTo = [];
+		for (let i = 0; i < data.players.length; i++) {
+			if (document.getElementById(data.players[i].name + 'DealCheckbox') && 
+				document.getElementById(data.players[i].name + 'DealCheckbox').checked) {
+				dealTo.push(data.players[i].name);
+			}
+		}
+		emit('server.deal', {
+			cards: parseInt(document.getElementById('dealCount').value),
+			order: dealTo
+		});
+	}
+});
+
+socket.on('client.hand', function (data) {
+	cardHand = data;
+	updateHand();
 });
 
 socket.on('client.error', function (data) {
 	console.error(Error(data));
 	errorQueue.push(data);
 	showErrorIfNecessary();
-});
-
-socket.on('updatePlayers', function (p) {
-	players = p;
 });
 
 socket.on('client.joinSuccess', function () {
@@ -101,36 +167,6 @@ socket.on('disconnect', function() {
 	// alert('Server disconnected.');
 	window.location.reload();
 });
-
-socket.on('client.play_cards', function (who, cards) {
-	addPlayed(who, cards);
-});
-
-socket.on('client.remove_cards', function (cards) {
-	removeCardsFromHand(cards);
-});
-
-function addPlayed(who, cards) {
-	const playerName = spectatorState.getPlayersInGame()[who].name;
-	const newElem = $(`<div class="playingField"></div>`);
-	newElem.width(cards.length * 30 + 80);
-	for (let i = 0; i < cards.length; i++) {
-		newElem.append($(createCard(cards[i], i, i * 30)));
-	}
-	const wrapper = $(`<div class="wrapper"><div class="name">${playerName} played</div></div>`);
-	wrapper.append(newElem);
-	$('.playHistory').append(wrapper);
-
-	$('.playHistory').scrollTop($('.playHistory')[0].scrollHeight);
-}
-
-function removeCardsFromHand(cards) {
-	for (let i = 0; i < cards.length; i++) {
-		cardHand.splice(cardHand.indexOf(cards[i]), 1);
-	}
-	cardsToPlay = [];
-	updateHand();
-}
 
 function errorTimeout() {
 	errorTimer = undefined;
@@ -149,94 +185,26 @@ function showErrorIfNecessary() {
 	}
 }
 
-socket.on('client.card_deal', function (cardToDeal) {
-	console.log('Card Deal Event');
-	cardHand.push(cardToDeal);
-	updateHand();
-	handContains(mainCard.slice(0, -1) + 'D', flipStatus + 1) ? $('.flip-diamonds').show() : $('.flip-diamonds').hide();
-	handContains(mainCard.slice(0, -1) + 'C', flipStatus + 1) ? $('.flip-clubs').show() : $('.flip-clubs').hide();
-	handContains(mainCard.slice(0, -1) + 'H', flipStatus + 1) ? $('.flip-hearts').show() : $('.flip-hearts').hide();
-	handContains(mainCard.slice(0, -1) + 'S', flipStatus + 1) ? $('.flip-spades').show() : $('.flip-spades').hide();
-	handContains('JJ', Math.max(flipStatus + 1, 2)) || handContains('J', Math.max(flipStatus + 1, 2)) ? $('.flip-joker').show() : $('.flip-joker').hide();
-});
-
 socket.on('updatePlayers', function (plist) {
 	players = plist;
-
 	updatePlayerUI();
 });
-// handContains(card, count) returns true if your hand contains the given number
-//   of the card
-function handContains(card, count)
-{
-	var wHand = cardHand.slice();
-	while (count != 0)
-	{
-		var i = wHand.indexOf(card);
-		if (i != -1) // has card
-		{
-			wHand.splice(i, 1); // we remove
-		}
-		else
-		{
-			return false;
-		}
-		count--;
-	}
-	return true;
-}
-
-// updatePlayerUI() reloads the other user displays.
-function updatePlayerUI()
-{
-	let htmlStrings = [];
-	let rotate = 0;
-	for (let i = 0; i < players.length; i++) {
-		if (players[i].id !== myId) {
-			htmlStrings.push(`<div class='otherPlayer player'>
-				<span class='name'>${players[i].name}</span><br><br>
-				<div class='playingField player-${i}'></div>
-			</div>`);
-		}
-		else {
-			rotate = i;
-		}
-	}
-	htmlStrings = htmlStrings.concat(htmlStrings);
-	let htmlString = '';
-	for (let i = 0; i < players.length - 1; i++) {
-		htmlString += htmlStrings[i + rotate];
-	}
-	$('.otherPlayers').html(htmlString);
-	var playerList = '<b>Players: </b>';
-	var i = 0;
-	while (i < players.length)
-	{
-		if (players[i] != null)
-		{
-			playerList += '<br>' + players[i].name + ' 打 ' + players[i].score;
-
-		}
-		i++;
-	}
-	$('.scoreboard').html(playerList);
-}
-
-// toggleCard(cardPosition) when user clicks on the card.
-function toggleCard(cardPosition)
-{
-	cardsToPlay[cardPosition] = !cardsToPlay[cardPosition];
-}
 
 // createCard(cardValue, index, xPos) produces a string of the created card with
 //   the given values.
 // createCard: Str Num Num -> Str
-function createCard(cardValue, index, xPos)
+function createCard(cardValue, index, xPos, id)
 {
 	var cardClass = 'card ';
 	var cardDisplayNum = '';
 	var cardSuit = '';
-	if (cardValue == 'JJ') //big joker
+	if (cardValue == 'FD') // facedown
+	{
+		cardDisplayNum = '<br><br>';
+		cardClass += 'back ';
+		cardSuit = '&#129313;';
+	}
+	else if (cardValue == 'JJ') //big joker
 	{
 		cardDisplayNum = '<br><br>';
 		cardClass += 'bJoker ';
@@ -297,11 +265,13 @@ function createCard(cardValue, index, xPos)
 	}
 	return `<div
 		data-selected='0'
+		data-id='${id}'
 		data-card='${cardValue}'
 		style='z-index: ${index}; left: ${xPos}px'
 		class='${cardClass}'>
 			<div class='value'>${cardDisplayNum}</div>
 			<div class='suit'>${cardSuit}</div>
+			<div class='valueBr'>${cardDisplayNum}</div>
 	</div>`;
 }
 
@@ -381,7 +351,6 @@ function sortHand()
 function insertInto(card, lst)
 {
 	var cVal = parseInt(card.substring(0, card.length - 1), 10);
-	var nVal = 0;
 	var currVal;
 	for (var i = 0; i < lst.length; i++)
 	{
@@ -400,167 +369,19 @@ function insertInto(card, lst)
 	return lst;
 }
 
-function updateSelectedCards() {
-	for (let i = 0; i < cardHand.length; i++) {
-		let card = $('.me div:nth-child(' + (i + 1) + ')');
-		if (cardsToPlay[i]) {
-			card.data('selected', 1);
-			card.addClass('selected');
-		}
-		else {
-			card.data('selected', 0);
-			card.removeClass('selected');
-		}
-	}
-	if (Object.values(cardsToPlay).filter(Boolean).length > 0) {
-		$('.play-cards').show();
-	}
-	else {
-		$('.play-cards').hide();
-	}
-}
-
 // updateHand() updates the player's hand with the cards in cardHand
 function updateHand()
 {
-	// TODO: sortHand makes the cardsToPlay awkward as it shifts
-	sortHand();
+	if (cardHand.length !== 0) sortHand();
 	console.log(cardHand);
-	var output = '';
 	$('.me').width(cardHand.length * 30 + 80);
 	$('.me').html('');
 	for (let i = 0; i < cardHand.length; i++) {
 		let card = $(createCard(cardHand[i], i, i * 30));
 		// So it captures the right number in the closure.
-		let j = i;
 		card.click(function () {
-			toggleCard(j);
-			updateSelectedCards();
+			selectedCard = cardHand[i];
 		});
 		$('.me').append(card);
 	}
-	updateSelectedCards();
-}
-
-// convertToHand(loC) converts an array of cards into a hand object
-function convertToHand(loC)
-{
-	var s = [];
-	var p = [];
-	for (var i = 0; i < loC.length; i++)
-	{
-		var find = s.indexOf(loC[i]);
-		if (find != -1)
-		{
-			p.push(loC[i]);
-			s.splice(find, 1);
-		}
-		else
-		{
-			s.push(loC[i]);
-		}
-	}
-	return { pairs: p, singles: s };
-}
-
-// convertToList(hand) converts a hand back to a list
-function convertToList(hand)
-{
-	var list = new Array();
-	for (var i = 0; i < hand.pairs.length; i++)
-	{
-		list.push(hand.pairs[i]);
-		list.push(hand.pairs[i]);
-	}
-	for (var i = 0; i < hand.singles.length; i++)
-	{
-		list.push(hand.singles[i]);
-	}
-	return list;
-}
-
-// isLegal() returns true if the handToPlay is legal and false otherwise
-function isLegal()
-{
-	var currentStartL = convertToList(currentStart);
-	console.log(currentStartL);
-	var startIsMain = isMain(currentStartL[0]);
-	var activeSuit = currentStartL[0].slice(-1);
-	// Case1, no suit of the currentStart, we allow player to play any cards as
-	//   long as it matches the count.
-	console.log('Has playable? + ' + hasPlayable(activeSuit, cardHand, startIsMain));
-	if (!hasPlayable(activeSuit, cardHand, startIsMain))
-	{
-		return (currentStartL.length == cardsToPlay.length);
-	}
-	else
-	{
-		if (currentStartL.length == cardsToPlay.length)
-		{
-			// If the player has less cards of the suit than is possible to
-			//   play, we force them to play all of possible.
-			console.log(countPlayable(activeSuit, cardHand, startIsMain));
-			if (countPlayable(activeSuit, cardHand, startIsMain) <= cardsToPlay.length) {
-				// We remove all the cards they want to play. If the playable
-				//   left is 0, then it's legal.
-				return (countPlayable(activeSuit, difference(cardHand, cardsToPlay), startIsMain) == 0);
-			}
-			// Player has enough Cards! Here we have to check the hands.
-			else
-			{
-				console.log(countPlayable(activeSuit, cardsToPlay, startIsMain));
-				// All cards have to be the right suit.
-				if (countPlayable(activeSuit, cardsToPlay, startIsMain) == cardsToPlay.length)
-				{
-					// Just have enough pairs to play in my hand.
-					console.log(countPlayable(activeSuit, convertToHand(cardHand).pairs, startIsMain));
-					console.log(handToPlay.pairs.length);
-					if (countPlayable(activeSuit, convertToHand(cardHand).pairs, startIsMain)
-						>= currentStart.pairs.length) {
-						return (handToPlay.pairs.length == currentStart.pairs.length);
-					}
-					else // Not enough pairs to play, so we have to use up all pairs.
-					{
-						console.log(countPlayable(activeSuit, convertToHand(difference(cardHand, cardsToPlay)).pairs, startIsMain));
-						return (countPlayable(activeSuit, convertToHand(difference(cardHand, cardsToPlay)).pairs, startIsMain) == 0);
-					}
-				}
-				else
-				{
-					return false;
-				}
-			}
-		}
-		else
-		{
-			return false;
-		}
-	}
-}
-
-// difference(a, b) removes all elements of b from a
-// difference: Arr<Str>, Arr<Str> -> Arr<Str>
-function difference(a, b)
-{
-	var lst = a.slice();
-	var lstb = b.slice();
-	while(lstb.length != 0)
-	{
-		var findIndex = lst.indexOf(lstb.pop());
-		if (findIndex != -1)
-		{
-			lst.splice(findIndex, 1);
-		}
-	}
-	return lst;
-}
-
-// isMain(card) returns true if the card belongs to the main group
-function isMain(card)
-{
-	return (card.slice(-1) == mainCard.slice(-1) ||
-		card == 'JJ' ||
-		card == 'J' ||
-		parseInt(card.substring(0, card.length - 1), 10)
-		== parseInt(mainCard.substring(0, mainCard.length - 1), 10));
 }
