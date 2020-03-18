@@ -21,6 +21,10 @@ http.listen(port, function() {
 });
 
 app.use('/static/', express.static(path.join(__dirname, '/public')));
+app.get('/prod.js', function (req, res) {
+	res.type('.js');
+	res.send('const isProduction = ' + (process.env.NODE_ENV === 'production') + ';');
+});
 app.get('/room/*', function(request, result) {
     // TODO(felixguo): This is super arbitrary, probably is a better way
     const id = request.path.split('/')[2];

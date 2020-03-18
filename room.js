@@ -98,7 +98,7 @@ class Room {
                 console.log('Deal done!');
                 clearInterval(intervalID);
             }
-        }, 10);
+        }, process.env.NODE_ENV === 'production' ? 200 : 10);
     }
 
     addPlayer (player) {

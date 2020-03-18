@@ -17,8 +17,6 @@ let errorTimer = undefined;
 
 const ERROR_TIMEOUT = 1000;
 
-const TEST_AUTO_JOIN = true;
-
 updateHand();
 $('#game').hide();
 
@@ -47,7 +45,7 @@ $('#joinGameBtn').click(function () {
 	}
 });
 
-if (TEST_AUTO_JOIN) {
+if (!isProduction) {
 	$('#nickname').val(Date.now());
 	$('#joinGameBtn').click();
 }
@@ -321,7 +319,6 @@ function createCard(cardValue, index, xPos, id)
 $('.sortingMethod').change(() => { updateHand(); });
 
 function sortHand() {
-	console.log($('.sortingMethod').val());
 	if ($('.sortingMethod').val() === 'tractor') {
 		sortHandTractor();
 	}
