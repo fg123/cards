@@ -26,6 +26,8 @@ body {
 	display: flex;
 	align-items: center;
 	height: 100vh;
+	position: relative;
+	overflow: hidden;
 }
 
 div.card {
@@ -57,6 +59,11 @@ div.card.rotate {
 	-o-transform: rotate(90deg);
 	-ms-transform: rotate(90deg);
 	transform: rotate(90deg);
+}
+
+div.cursor {
+	position: absolute;
+	z-index: 100000;
 }
 
 div.card.back:hover {
@@ -122,13 +129,13 @@ div.card.back {
 
 div.field {
 	position: absolute;
-	top: 50%;
+	top: 10px;
 	left: 40%;
-	margin: -400px 0 0 -600px;
+	margin: 0 0 0 -600px;
 	width: 1200px;
 	height: 800px;
 	background: url("images/texture.jpg") repeat;
-    overflow: none;
+    overflow: hidden;
 }
 
 div.me {

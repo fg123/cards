@@ -9,6 +9,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 	</head>
 	<body>
+		<div class="cursor"></div>
 		<div class="container" id="login">
 			<div class="row">
 				<div class="col-md-4"></div>
@@ -44,6 +45,7 @@
 						<option value="1dnj">1 Deck No Joker</option>
 						<option value="1d">1 Deck</option>
 						<option value="2d">2 Decks</option>
+						<option value="3d">3 Decks</option>
 					</select>
 					<input type="checkbox" id="shuffleCheckbox" value="shuffle" checked> Shuffle?
 					<button onclick="emit('server.setDeck', {
@@ -58,6 +60,13 @@
 
 					</div>
 					<button onclick="dealCards()">Deal Cards</button>
+					<br>
+					<br>
+					Sorting Method: <br>
+					<select class="sortingMethod">
+						<option value="tractor" selected>Tractor</option>
+						<option value="big2">Big 2</option>
+					</select>
 				</div>
 			</div>
 			<div class="field">

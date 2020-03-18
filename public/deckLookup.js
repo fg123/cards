@@ -9,5 +9,6 @@ const one_deck = one_deck_nj.concat(['JJ', 'J']);
 const DeckLookup = {
     '1dnj': one_deck_nj,
     '1d': one_deck,
-    '2d': one_deck.concat(one_deck)
+    '2d': one_deck.concat(one_deck),
+    '3d': one_deck.concat(one_deck).concat(one_deck)
 };

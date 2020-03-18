@@ -79,6 +79,7 @@ class Room {
         if (id >= this.field.length) return;
         this.field[id].x = location.x;
         this.field[id].y = location.y;
+        this.field.push(this.field.splice(id, 1)[0]);
         this.pushSpectatorState();
     }
 
@@ -86,6 +87,7 @@ class Room {
         // TODO: verify names
         n = n || this.deck.length;
         console.log('Dealing', n, 'cards to', names);
+        if (n === 0) return;
         let i = 0; 
         let j = 0;
         const intervalID = setInterval(() => {
@@ -96,7 +98,7 @@ class Room {
                 console.log('Deal done!');
                 clearInterval(intervalID);
             }
-        }, 50);
+        }, 10);
     }
 
     addPlayer (player) {
@@ -138,7 +140,8 @@ class Room {
                 return {
                     name: player.name,
                     state: player.state,
-                    score: player.score
+                    score: player.score,
+                    cardCount: (this.hands[player.name] || []).length
                 };
             }),
             field: this.field.slice(0).map(card => {

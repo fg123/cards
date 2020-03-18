@@ -7,13 +7,17 @@ let currentTurn = false;
 let cardHand = [];
 let mainCard = '5D';
 let selectedCard = undefined;
-let flipStatus = 0;
+let clickOffsetX = 0;
+let clickOffsetY = 0;
+
+let dropFaceDown = false;
+
 const errorQueue = [];
 let errorTimer = undefined;
 
 const ERROR_TIMEOUT = 1000;
 
-const TEST_AUTO_JOIN = false;
+const TEST_AUTO_JOIN = true;
 
 updateHand();
 $('#game').hide();
@@ -49,30 +53,68 @@ if (TEST_AUTO_JOIN) {
 }
 
 let dealCards = () => {};
+$('.field').contextmenu(function() { return false });
 
-$('.field').mousedown((e) => {
-	if (selectedCard !== undefined) {
-		const x = e.pageX - $('.field').offset().left;
-		const y = e.pageY - $('.field').offset().top;
-		if (typeof selectedCard === 'string') {
+function isMouseOverField(e) {
+	const rect = $('.field')[0].getBoundingClientRect();
+	return e.pageX > rect.left && e.pageX < rect.right && e.pageY > rect.top && e.pageY < rect.bottom;
+}
+
+$(document).mouseup((e) => {
+	if (selectedCard !== undefined && isMouseOverField(e)) {
+		const x = e.pageX - $('.field').offset().left - clickOffsetX;
+		const y = e.pageY - $('.field').offset().top - clickOffsetY;
+		if (parseInt(selectedCard.data('id')) === -1) {
 			// Placing a card from your hand
 			emit('server.placeCard', {
-				card: selectedCard,
+				card: selectedCard.data('card'),
 				location: { x, y },
-				facedown: event.which === 3
+				facedown: dropFaceDown
 			});
-		} else if (typeof selectedCard === 'number') {
+		} else {
 			// Placing a card picked up on the field
 			emit('server.moveCard', {
-				id: selectedCard,
+				id: parseInt(selectedCard.data('id')),
 				location: { x, y }
 			});
 		}
-		selectedCard = undefined;
+	}
+	else if (selectedCard !== undefined) {
+		selectedCard.show();
+	}
+	selectedCard = undefined;
+});
+
+$(document).mousemove((e) => {
+	$('.cursor').hide();
+	if (selectedCard !== undefined) {
+		$('.cursor').show();
+		$('.cursor')[0].style.top = (e.pageY - clickOffsetY)+ 'px';
+		$('.cursor')[0].style.left = (e.pageX - clickOffsetX) + 'px';
 	}
 });
 
-$('.field').contextmenu(function() { return false });
+function onMouseDownOnCard(e) {
+	let newElem = selectedCard.clone();
+	if (dropFaceDown) {
+		newElem = $(`<div class='card back'>&nbsp;</div>`);
+	}
+	$('.cursor').html(newElem);
+	
+	const rect = e.currentTarget.getBoundingClientRect();
+	
+	clickOffsetX = e.pageX - rect.left;
+	clickOffsetY = e.pageY - rect.top;
+
+	console.log(clickOffsetX, clickOffsetY);
+
+	newElem[0].style.top = '0px';
+	newElem[0].style.left = '0px';
+	$('.cursor')[0].style.top = (e.pageY - clickOffsetY) + 'px';
+	$('.cursor')[0].style.left = (e.pageX - clickOffsetX) + 'px';
+	$('.cursor').show();
+	selectedCard.hide();
+}
 
 socket.on('client.spectator', function (data) {
 	$('.scoreboard .players').html(`
@@ -97,7 +139,8 @@ socket.on('client.spectator', function (data) {
 		card[0].style.left = data.field[i].x + "px";
 		card.mousedown((e) => {
 			if (e.which === 1) {
-				selectedCard = i;
+				selectedCard = card;
+				onMouseDownOnCard(e);
 			}
 			else if (selectedCard === undefined) {
 				if (e.which === 2) {
@@ -129,7 +172,7 @@ socket.on('client.spectator', function (data) {
 	}
 	$('.scoreboard .dealPlayers').html(`
 		${data.players
-			.map(p => '<input type="checkbox" id="' + p.name + 'DealCheckbox" value="shuffle" ' + checkMapping[p.name] + '>' + p.name)
+			.map(p => '<input type="checkbox" id="' + p.name + 'DealCheckbox" value="shuffle" ' + checkMapping[p.name] + '>' + p.name + ' (' + p.cardCount + ')')
 			.join('<br>')}
 	`);
 	dealCards = () => {
@@ -275,9 +318,39 @@ function createCard(cardValue, index, xPos, id)
 	</div>`;
 }
 
-// sortHand() sorts the cards in cardHand based on Joker, Main Numbers,
-//   Main Suit, Rest
-function sortHand()
+$('.sortingMethod').change(() => { updateHand(); });
+
+function sortHand() {
+	console.log($('.sortingMethod').val());
+	if ($('.sortingMethod').val() === 'tractor') {
+		sortHandTractor();
+	}
+	else {
+		sortHandBig2();
+	}
+}
+
+function sortHandBig2() {
+	function cardVal(c) {
+		if (c === 'JJ') return 10000;
+		else if (c === 'JJ') return 1000;
+		let val = parseInt(c.substring(0, c.length - 1), 10);
+		// Ace and 2 bigger than king
+		if (val === 1) val = 14;
+		else if (val === 2) val = 15;
+		let suit = 0;
+		switch (c.slice(-1)) {
+			case 'H': suit = 3; break;
+			case 'D': suit = 1; break;
+			case 'S': suit = 4; break;
+			case 'C': suit = 2; break;
+		}
+		return val * 10 + suit;
+	}
+	cardHand.sort((a, b) => cardVal(a) - cardVal(b));
+}
+
+function sortHandTractor()
 {
 	var mainSuit = mainCard.slice(-1);
 	var mainValue = parseInt(mainCard.substring(0, mainCard.length - 1), 10);
@@ -377,11 +450,15 @@ function updateHand()
 	$('.me').width(cardHand.length * 30 + 80);
 	$('.me').html('');
 	for (let i = 0; i < cardHand.length; i++) {
-		let card = $(createCard(cardHand[i], i, i * 30));
+		let card = $(createCard(cardHand[i], i, i * 30, -1));
 		// So it captures the right number in the closure.
-		card.click(function () {
-			selectedCard = cardHand[i];
+		card.mousedown((e) => {
+			dropFaceDown = e.which === 2;
+			selectedCard = card;
+
+			onMouseDownOnCard(e);
 		});
+		card.contextmenu(function() { return false });
 		$('.me').append(card);
 	}
 }
