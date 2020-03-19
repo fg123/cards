@@ -138,6 +138,7 @@ socket.on('client.spectator', function (data) {
 		card.mousedown((e) => {
 			if (e.which === 1) {
 				selectedCard = card;
+				dropFaceDown = data.field[i].facedown;
 				onMouseDownOnCard(e);
 			}
 			else if (selectedCard === undefined) {

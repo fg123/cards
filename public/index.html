@@ -39,6 +39,7 @@
 				<div>
 					<br>
 					<button onclick="emit('server.reset')">Reset Server</button>
+					<button onclick="emit('server.clearField')">Clear Field</button>
 					<br>
 					<br>
 					<select id="deckSelect">
@@ -60,6 +61,8 @@
 
 					</div>
 					<button onclick="dealCards()">Deal Cards</button>
+					<br>
+					<button onclick="emit('server.dealOne')">Deal One Card To Field</button>
 					<br>
 					<br>
 					Sorting Method: <br>

@@ -54,6 +54,32 @@ class Room {
         this.pushSpectatorState();
     }
 
+    clearField() {
+        this.field = [];
+        this.pushSpectatorState();
+    }
+
+    dealOneToField() {
+        if (this.deck.length === 0) return;
+        const card = this.deck.pop();
+        let multiples = [];
+        for (let i = 0; i < this.field.length; i++) {
+            if (this.field[i].y === 10) {
+                if ((this.field[i].x - 10) % 100 === 0) {
+                    multiples.push((this.field[i].x - 10) / 100);
+                }
+            }
+        }
+        multiples.sort();
+        let c = 0;
+        for (let i = 0; i < multiples.length; i++) {
+            if (c !== multiples[i]) break;
+            c++;
+        }
+        this.field.push({ card, x: (c * 100) + 10, y: 10, facedown: false });
+        this.pushSpectatorState();
+    }
+
     dealOne(to) {
         if (this.deck.length === 0) return;
         if (this.hands[to] === undefined) {

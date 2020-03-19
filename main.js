@@ -84,6 +84,14 @@ io.on('connection', function (socket) {
 		rooms[data.room].takeCard(players[socket.id].name, data.id);
 	});
 
+	socket.on('server.clearField', function (data) {
+		rooms[data.room].clearField();
+	});
+
+	socket.on('server.dealOne', function (data) {
+		rooms[data.room].dealOneToField();
+	});
+
 	socket.on('server.flipCard', function (data) {
 		rooms[data.room].flipCard(data.id);
 	});
