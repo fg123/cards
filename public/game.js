@@ -58,16 +58,29 @@ function isMouseOverField(e) {
 	return e.pageX > rect.left && e.pageX < rect.right && e.pageY > rect.top && e.pageY < rect.bottom;
 }
 
+function rotateField() {
+	// $('.field')[0].style.transform = 'rotate(' + $('.rotation').val() + 'deg)';
+}
+
+// $('.rotation').change((e) => { rotateField(); });
+
 $(document).mouseup((e) => {
 	if (selectedCard !== undefined && isMouseOverField(e)) {
 		const x = e.pageX - $('.field').offset().left - clickOffsetX;
 		const y = e.pageY - $('.field').offset().top - clickOffsetY;
+		// const rotation = parseInt($('.rotation').val());
+		// const rotationRad = rotation * Math.PI / 180;
+		// console.log(rotationRad);
+		// const newX = 800 * Math.cos(rotationRad) - x * Math.cos(rotationRad) + y * Math.sin(rotationRad);
+		// const newY = 800 * Math.sin(rotationRad) - x * Math.sin(rotationRad) - y * Math.cos(rotationRad);
+		// console.log(x, y, newX, newY);
 		if (parseInt(selectedCard.data('id')) === -1) {
 			// Placing a card from your hand
 			emit('server.placeCard', {
 				card: selectedCard.data('card'),
-				location: { x, y },
+				location: { x: x, y: y },
 				facedown: dropFaceDown
+				// rotation: (-rotation + 360) % 360
 			});
 		} else {
 			// Placing a card picked up on the field
@@ -127,10 +140,12 @@ socket.on('client.spectator', function (data) {
 	`);
 	$('.field').html('');
 	for (let i = 0; i < data.field.length; i++) {
-		let card = $(createCard(data.field[i].card, i, 0, i));
+		console.log(data.field[i].lastTouch);
+		let card = $(createCard(data.field[i].card, data.field[i].lastTouch, 0, i));
 		if (data.field[i].facedown) {
-			card = $(`<div class='card back' data-id='${i}'>&nbsp;</div>`)
+			card = $(`<div class='card back' data-id='${i}' style='z-index: ${data.field[i].lastTouch};'>&nbsp;</div>`)
 		}
+		card[0].style['transform-origin'] = 'top left';
 		// So it captures the right number in the closure.
 		card[0].style.position = "absolute";
 		card[0].style.top = data.field[i].y + "px";
@@ -200,9 +215,11 @@ socket.on('client.error', function (data) {
 	showErrorIfNecessary();
 });
 
-socket.on('client.joinSuccess', function () {
+socket.on('client.joinSuccess', function (pos) {
 	$('#game').show();
 	$('#login').hide();
+	// $(".rotation")[0].selectedIndex = pos % 4;
+	// rotateField();
 });
 
 socket.on('disconnect', function() {
@@ -226,11 +243,6 @@ function showErrorIfNecessary() {
 		errorTimer = setTimeout(errorTimeout, ERROR_TIMEOUT);
 	}
 }
-
-socket.on('updatePlayers', function (plist) {
-	players = plist;
-	updatePlayerUI();
-});
 
 // createCard(cardValue, index, xPos) produces a string of the created card with
 //   the given values.
@@ -318,6 +330,8 @@ function createCard(cardValue, index, xPos, id)
 }
 
 $('.sortingMethod').change(() => { updateHand(); });
+$('.trumpSuit').change(() => { updateHand(); });
+$('.trumpNumber').change(() => { updateHand(); });
 
 function sortHand() {
 	if ($('.sortingMethod').val() === 'tractor') {
@@ -350,15 +364,15 @@ function sortHandBig2() {
 
 function sortHandTractor()
 {
-	var mainSuit = mainCard.slice(-1);
-	var mainValue = parseInt(mainCard.substring(0, mainCard.length - 1), 10);
+	let mainSuit = $('.trumpSuit').val();
+	let mainValue = parseInt($('.trumpNumber').val(), 10);
 
-	var mains = new Array();
-	var hearts = new Array();
-	var spades = new Array();
-	var diamonds = new Array();
-	var clubs = new Array();
-	var jokers = new Array();
+	let mains = new Array();
+	let hearts = new Array();
+	let spades = new Array();
+	let diamonds = new Array();
+	let clubs = new Array();
+	let jokers = new Array();
 	for (var i = 0; i < cardHand.length; i++)
 	{
 		var c = cardHand[i];

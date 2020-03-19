@@ -7,6 +7,8 @@ class Room {
         this.field = [];
         this.hands = {};
         this.deck = [];
+
+        this.startTime = Date.now();
     }
 
     reset() {
@@ -38,7 +40,7 @@ class Room {
         this.pushSpectatorState();
     }
 
-    takeCard(name,  id) {
+    takeCard(name, id) {
         if (id >= this.field.length) return;
         if (this.hands[name] === undefined) {
             this.hands[name] = [];
@@ -76,7 +78,7 @@ class Room {
             if (c !== multiples[i]) break;
             c++;
         }
-        this.field.push({ card, x: (c * 100) + 10, y: 10, facedown: false });
+        this.field.push({ card, x: (c * 100) + 10, y: 10, facedown: false, rotation: 0, lastTouch: Date.now() - this.startTime });
         this.pushSpectatorState();
     }
 
@@ -89,12 +91,12 @@ class Room {
         this.pushSpectatorState();
     }
 
-    placeCard(name, card, location, facedown) {
-        console.log('Placing card', card, 'from', name, 'to', location, 'facedown', facedown);
+    placeCard(name, card, location, facedown, rotation) {
+        console.log('Placing card', card, 'from', name, 'to', location, 'facedown', facedown, 'rotation', rotation);
         for (let i = 0; i < this.hands[name].length; i++) {
             if (this.hands[name][i] === card) {
                 this.hands[name].splice(i, 1);
-                this.field.push({ card, x: location.x, y: location.y, facedown });
+                this.field.push({ card, x: location.x, y: location.y, facedown, rotation, lastTouch: Date.now() - this.startTime });
                 this.pushSpectatorState();
                 break;
             }
@@ -105,7 +107,7 @@ class Room {
         if (id >= this.field.length) return;
         this.field[id].x = location.x;
         this.field[id].y = location.y;
-        this.field.push(this.field.splice(id, 1)[0]);
+        this.field[id].lastTouch = Date.now() - this.startTime;
         this.pushSpectatorState();
     }
 
@@ -117,6 +119,10 @@ class Room {
         let i = 0; 
         let j = 0;
         const intervalID = setInterval(() => {
+            if (this.deck.length === 0) {
+                console.log('Deal zeroed!');
+                return;
+            }
             this.dealOne(names[i]);
             i += 1;
             if (i >= names.length) i = 0;
@@ -129,13 +135,11 @@ class Room {
 
     addPlayer (player) {
         this.players.push(player);
+        return this.players.length - 1;
     }
 
     removePlayer(player) {
         // Called when a player disconnects from the room.
-        if (this.hands[player.name]) { 
-            delete this.hands[player.name];
-        }
         for (let i = 0; i < this.players.length; i++) {
             if (this.players[i].name === player.name) {
                 this.players.splice(i, 1);

@@ -58,14 +58,14 @@ io.on('connection', function (socket) {
 			return;
 		}
 		const player = new Player(socket, data.name, rooms[data.room]);
-		rooms[data.room].addPlayer(player);
-		socket.emit('client.joinSuccess');
+		const pos = rooms[data.room].addPlayer(player);
+		socket.emit('client.joinSuccess', pos);
 		rooms[data.room].pushSpectatorState();
 		players[socket.id] = player;
 	});
 
 	socket.on('server.placeCard', function (data) {
-		rooms[data.room].placeCard(players[socket.id].name, data.card, data.location, data.facedown);
+		rooms[data.room].placeCard(players[socket.id].name, data.card, data.location, data.facedown, data.rotation);
 	});
 
 	socket.on('server.moveCard', function (data) {

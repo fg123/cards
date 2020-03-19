@@ -37,7 +37,15 @@
 
 				</div>
 				<div>
+					<!-- Rotation: 
+					<select class="rotation">
+						<option value="0">0&deg;</option>
+						<option value="90">90&deg;</option>
+						<option value="180">180&deg;</option>
+						<option value="270">270&deg;</option>
+					</select>
 					<br>
+					<br> -->
 					<button onclick="emit('server.reset')">Reset Server</button>
 					<button onclick="emit('server.clearField')">Clear Field</button>
 					<br>
@@ -65,10 +73,36 @@
 					<button onclick="emit('server.dealOne')">Deal One Card To Field</button>
 					<br>
 					<br>
-					Sorting Method: <br>
+					Sorting Method: 
 					<select class="sortingMethod">
 						<option value="tractor" selected>Tractor</option>
 						<option value="big2">Big 2</option>
+					</select>
+					<br>
+					Trump: 
+					<select class="trumpSuit">
+						<option value="N">No Suit</option>
+						<option value="D" selected>Diamonds</option>
+						<option value="C">Clubs</option>
+						<option value="H">Hearts</option>
+						<option value="S">Spades</option>
+					</select>
+					<br>
+					Trump Number: 
+					<select class="trumpNumber">
+						<option value="1" selected>A</option>
+						<option value="2">2</option>
+						<option value="3">3</option>
+						<option value="4">4</option>
+						<option value="5">5</option>
+						<option value="6">6</option>
+						<option value="7">7</option>
+						<option value="8">8</option>
+						<option value="9">9</option>
+						<option value="10">10</option>
+						<option value="11">J</option>
+						<option value="12">Q</option>
+						<option value="13">K</option>
 					</select>
 				</div>
 			</div>
