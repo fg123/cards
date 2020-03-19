@@ -65,7 +65,7 @@ div.card.rotate {
 
 div.cursor {
 	position: absolute;
-	z-index: 100000;
+	z-index: 2147483647;
 }
 
 div.card.back:hover {
