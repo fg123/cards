@@ -88,6 +88,14 @@ io.on('connection', function (socket) {
 		rooms[data.room].clearField();
 	});
 
+	socket.on('server.placeCardPlayArea', function (data) {
+		rooms[data.room].placeCardPlayArea(players[socket.id].name, data.card, data.location, data.facedown);
+	});
+
+	socket.on('server.flipOverPlayArea', function (data) {
+		rooms[data.room].flipOverPlayArea(data.x, data.y, data.width, data.height);
+	});
+
 	socket.on('server.dealOne', function (data) {
 		rooms[data.room].dealOneToField();
 	});
@@ -98,6 +106,10 @@ io.on('connection', function (socket) {
 
 	socket.on('server.deal', function (data) {
 		rooms[data.room].deal(data.cards, data.order);
+	});
+
+	socket.on('server.changePlayArea', function (data) {
+		rooms[data.room].changePlayArea(players[socket.id].name, data.top, data.left);
 	});
 
     socket.on('disconnect', function () {
@@ -118,10 +130,4 @@ function removePlayerFromRoom(player) {
         // Notify rest of players someone left (as if they lost)
         room.pushSpectatorState();
     }
-}
-
-function generateRoomId() {
-    var newId = (Math.random() * 1000) | 0;
-    while (rooms[newId]) newId = (Math.random() * 1000) | 0;
-    return newId;
 }

@@ -73,6 +73,18 @@
 					<button onclick="emit('server.dealOne')">Deal One Card To Field</button>
 					<br>
 					<br>
+					Play Location:
+					<select class="playAreaSelect">
+						<option value="0,0">Top Left</option>
+						<option value="0,33">Top</option>
+						<option value="0,67">Top Right</option>
+						<option value="33,0">Left</option>
+						<option value="33,67">Right</option>
+						<option value="67,0">Bottom Left</option>
+						<option value="67,33">Bottom</option>
+						<option value="67,67">Bottom Right</option>
+					</select>
+					<br>
 					Sorting Method: 
 					<select class="sortingMethod">
 						<option value="tractor" selected>Tractor</option>
@@ -104,6 +116,7 @@
 						<option value="12">Q</option>
 						<option value="13">K</option>
 					</select>
+					
 				</div>
 			</div>
 			<div class="field">

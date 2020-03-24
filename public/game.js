@@ -17,6 +17,7 @@ let errorTimer = undefined;
 
 const ERROR_TIMEOUT = 1000;
 
+let myPlayArea = undefined;
 updateHand();
 $('#game').hide();
 
@@ -92,6 +93,7 @@ $(document).mouseup((e) => {
 	}
 	else if (selectedCard !== undefined) {
 		selectedCard.show();
+		$('.cursor').hide();
 	}
 	selectedCard = undefined;
 });
@@ -127,6 +129,14 @@ function onMouseDownOnCard(e) {
 	selectedCard.hide();
 }
 
+$('.playAreaSelect').change(() => {
+	const vals = $('.playAreaSelect').val().split(',');
+	emit('server.changePlayArea', {
+		top: vals[0] + '%',
+		left: vals[1] + '%'
+	});
+});
+
 socket.on('client.spectator', function (data) {
 	$('.scoreboard .players').html(`
 			<b>Playing:</b>
@@ -139,11 +149,23 @@ socket.on('client.spectator', function (data) {
 			<br>
 	`);
 	$('.field').html('');
+	console.log(data);
+	myPlayArea = undefined;
+	for (let i = 0; i < data.players.length; i++) {
+		const div = $(`<div class="playArea" style="top: ${data.players[i].playArea.top}; left: ${data.players[i].playArea.left}">
+			<div class="name">${data.players[i].name}</div>
+		</div>`);
+		$('.field').append(div);
+		if (data.players[i].name === myName) {
+			myPlayArea = div;
+			div.append(`<button onclick='flipOverPlayArea()'>Flip Over</button>`);
+		}
+	}
+	
 	for (let i = 0; i < data.field.length; i++) {
-		console.log(data.field[i].lastTouch);
 		let card = $(createCard(data.field[i].card, data.field[i].lastTouch, 0, i));
 		if (data.field[i].facedown) {
-			card = $(`<div class='card back' data-id='${i}' style='z-index: ${data.field[i].lastTouch};'>&nbsp;</div>`)
+			card = $(`<div class='card back' data-id='${i}' style='z-index: ${data.field[i].lastTouch};'>&nbsp;</div>`);
 		}
 		card[0].style['transform-origin'] = 'top left';
 		// So it captures the right number in the closure.
@@ -442,7 +464,6 @@ function insertInto(card, lst)
 		currVal = parseInt(lst[i], 10);
 		if (cVal == 1) { cVal = 14; } //to guarantee 1 is at the end
 		if (currVal == 1) { currVal = 14; } //to guarantee 1 is at the end
-		//console.log(cVal + ' ' + currVal);
 		if (cVal >= currVal)
 		{
 			lst.splice(i, 0, card);
@@ -464,13 +485,44 @@ function updateHand()
 	for (let i = 0; i < cardHand.length; i++) {
 		let card = $(createCard(cardHand[i], i, i * 30, -1));
 		// So it captures the right number in the closure.
+		let lastDown = 0;
+		
 		card.mousedown((e) => {
+			if (Date.now() - lastDown < 300) {
+				if (!myPlayArea) {
+					console.error('Invalid play area!');
+					return;
+				}
+				const fieldOffset = $('.field').offset();
+				const playAreaOffset = myPlayArea.offset();
+
+				emit('server.placeCardPlayArea', {
+					card: card.data('card'),
+					facedown: e.which === 2,
+					location: {
+						x: playAreaOffset.left - fieldOffset.left + 10,
+						y: playAreaOffset.top - fieldOffset.top + 100
+					}
+				})
+				return;
+			}
+			lastDown = Date.now();
 			dropFaceDown = e.which === 2;
 			selectedCard = card;
-
 			onMouseDownOnCard(e);
 		});
 		card.contextmenu(function() { return false });
 		$('.me').append(card);
 	}
+}
+
+function flipOverPlayArea() {
+	const fieldOffset = $('.field').offset();
+	const playAreaOffset = myPlayArea.offset();
+	emit('server.flipOverPlayArea', {
+			x: playAreaOffset.left - fieldOffset.left,
+			y: playAreaOffset.top - fieldOffset.top,
+			width: myPlayArea.width(),
+			height: myPlayArea.height()
+	});
 }

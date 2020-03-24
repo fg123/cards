@@ -103,6 +103,30 @@ class Room {
         }
     }
 
+    flipOverPlayArea(x, y, width, height) {
+        for (let i = 0; i < this.field.length; i++) {
+            const item = this.field[i];
+            if (item.x >= x && item.x <= x + width && item.y >= y && item.y <= y + height) {
+                item.facedown = true;
+            }
+        }
+        this.pushSpectatorState();
+    }
+    
+    hasCardAt(x, y) {
+        for (let i = 0; i < this.field.length; i++) {
+            if (this.field[i].x === x && this.field[i].y === y && !this.field[i].facedown) return true;
+        }
+        return false;
+    }
+
+    placeCardPlayArea(name, card, location, facedown) {
+        while (this.hasCardAt(location.x, location.y)) {
+            location.x += 30;
+        }
+        this.placeCard(name, card, location, facedown);
+    }
+
     moveCard(id, location) {
         if (id >= this.field.length) return;
         this.field[id].x = location.x;
@@ -138,11 +162,31 @@ class Room {
         return this.players.length - 1;
     }
 
+    getPlayer(name) {
+        for (let i = 0; i < this.players.length; i++) {
+            if (this.players[i].name === name) {
+                return this.players[i];
+            }
+        }
+        return undefined;
+    }
+
     removePlayer(player) {
         // Called when a player disconnects from the room.
         for (let i = 0; i < this.players.length; i++) {
             if (this.players[i].name === player.name) {
                 this.players.splice(i, 1);
+                return;
+            }
+        }
+    }
+
+    changePlayArea(name, top, left) {
+        for (let i = 0; i < this.players.length; i++) {
+            if (this.players[i].name === name) {
+                this.players[i].playArea.top = top;
+                this.players[i].playArea.left = left;
+                this.pushSpectatorState();
                 return;
             }
         }
@@ -171,7 +215,8 @@ class Room {
                     name: player.name,
                     state: player.state,
                     score: player.score,
-                    cardCount: (this.hands[player.name] || []).length
+                    cardCount: (this.hands[player.name] || []).length,
+                    playArea: player.playArea
                 };
             }),
             field: this.field.slice(0).map(card => {
