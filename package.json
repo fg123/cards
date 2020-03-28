@@ -10,8 +10,8 @@
   "dependencies": {
     "bootstrap": "^3.3.7",
     "express": "^4.14.0",
-    "nodemon": "^1.19.1",
-    "socket.io": "^2.2.0",
-    "uuid": "^3.3.3"
+    "nodemon": "^1.19.4",
+    "socket.io": "^2.3.0",
+    "uuid": "^3.4.0"
   }
 }
