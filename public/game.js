@@ -482,7 +482,7 @@ function insertIntoBySuit(card, lst)
 {
 	for (let i = 0; i < lst.length; i++)
 	{
-		if (card.suit === lst[i].suit)
+		if (card.slice(-1) === lst[i].slice(-1))
 		{
 			lst.splice(i, 0, card);
 			return lst;
