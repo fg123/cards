@@ -413,7 +413,7 @@ function sortHandTractor()
 			if (val == mainValue) // is a main value card
 			{
 				if (suit == mainSuit) mains.unshift(c);
-				else mains.insertIntoBySuit(c);
+				else insertIntoBySuit(c, mains);
 			}
 			else
 			{
@@ -480,9 +480,9 @@ function insertInto(card, lst)
 // insertInto: Str Arr<Str> -> Arr<Str>
 function insertIntoBySuit(card, lst)
 {
-	for (var i = 0; i < lst.length; i++)
+	for (let i = 0; i < lst.length; i++)
 	{
-		if (card.suit == lst[i].suit)
+		if (card.suit === lst[i].suit)
 		{
 			lst.splice(i, 0, card);
 			return lst;
