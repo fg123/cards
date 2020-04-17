@@ -46,6 +46,20 @@ $('#joinGameBtn').click(function () {
 	}
 });
 
+function sendChat() {
+	const value = $('#chatTextbox').val();
+	if (value) {
+		emit('server.chat', {
+			message: value
+		});
+		$('#chatTextbox').val('');
+	}
+}
+
+$('#chatBtn').click(function() {
+	sendChat();
+});
+
 if (!isProduction) {
 	$('#nickname').val(Date.now());
 	$('#joinGameBtn').click();
@@ -135,6 +149,18 @@ $('.playAreaSelect').change(() => {
 		top: vals[0] + '%',
 		left: vals[1] + '%'
 	});
+});
+
+$('#chatTextbox').keydown(function(e) {
+	console.log(e.which);
+	if (e.which == 13) {
+		sendChat();
+	}
+});
+
+socket.on('client.chat', function(data) {
+	$('.chatBox').append(`${data.name}: ${data.message}\n`);
+	$('.chatBox').scrollTop($('.chatBox')[0].scrollHeight);
 });
 
 socket.on('client.spectator', function (data) {

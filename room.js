@@ -61,6 +61,15 @@ class Room {
         this.pushSpectatorState();
     }
 
+    chat(name, message) {
+        this.players.forEach(player => {
+            player.socket.emit('client.chat', {
+                name,
+                message
+            });
+        });
+    }
+
     dealOneToField() {
         if (this.deck.length === 0) return;
         const card = this.deck.pop();
@@ -93,12 +102,14 @@ class Room {
 
     placeCard(name, card, location, facedown, rotation) {
         console.log('Placing card', card, 'from', name, 'to', location, 'facedown', facedown, 'rotation', rotation);
-        for (let i = 0; i < this.hands[name].length; i++) {
-            if (this.hands[name][i] === card) {
-                this.hands[name].splice(i, 1);
-                this.field.push({ card, x: location.x, y: location.y, facedown, rotation, lastTouch: Date.now() - this.startTime });
-                this.pushSpectatorState();
-                break;
+        if (this.hands[name]) {
+            for (let i = 0; i < this.hands[name].length; i++) {
+                if (this.hands[name][i] === card) {
+                    this.hands[name].splice(i, 1);
+                    this.field.push({ card, x: location.x, y: location.y, facedown, rotation, lastTouch: Date.now() - this.startTime });
+                    this.pushSpectatorState();
+                    break;
+                }
             }
         }
     }
@@ -145,6 +156,7 @@ class Room {
         const intervalID = setInterval(() => {
             if (this.deck.length === 0) {
                 console.log('Deal zeroed!');
+                clearInterval(intervalID);
                 return;
             }
             this.dealOne(names[i]);

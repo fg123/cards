@@ -112,6 +112,10 @@ io.on('connection', function (socket) {
 		rooms[data.room].changePlayArea(players[socket.id].name, data.top, data.left);
 	});
 
+	socket.on('server.chat', function (data) {
+		rooms[data.room].chat(players[socket.id].name, data.message);
+	});
+
     socket.on('disconnect', function () {
 		if (players[socket.id] !== undefined) {
 			removePlayerFromRoom(players[socket.id]);
