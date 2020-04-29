@@ -100,6 +100,10 @@ io.on('connection', function (socket) {
 		rooms[data.room].dealOneToField();
 	});
 
+	socket.on('server.dealRestToMe', function (data) {
+		rooms[data.room].dealRestTo(players[socket.id].name);
+	});
+
 	socket.on('server.flipCard', function (data) {
 		rooms[data.room].flipCard(data.id);
 	});

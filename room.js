@@ -91,6 +91,13 @@ class Room {
         this.pushSpectatorState();
     }
 
+    dealRestTo(to) {
+        while (this.deck.length !== 0) {
+            this.dealOne(to);
+        }
+        this.pushSpectatorState();
+    }
+
     dealOne(to) {
         if (this.deck.length === 0) return;
         if (this.hands[to] === undefined) {
