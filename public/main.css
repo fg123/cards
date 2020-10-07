@@ -68,6 +68,16 @@ div.cursor {
 	z-index: 2147483647;
 }
 
+div.otherPlayerCursor {
+	position: absolute;
+	background: #c7af29;
+	opacity: 0.8;
+	z-index: 2147483645;
+	color: #000;
+	padding: 5px;
+	border-radius: 0px 15px 15px 15px;
+}
+
 div.card.back:hover {
 	top: 0px;
 }
@@ -129,7 +139,7 @@ div.card.back {
 	background: url("images/back.png") repeat repeat !important;
 }
 
-div.field {
+div.fieldProperties {
 	position: absolute;
 	top: 10px;
 	left: 40%;

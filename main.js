@@ -120,6 +120,10 @@ io.on('connection', function (socket) {
 		rooms[data.room].processChat(players[socket.id].name, data.message);
 	});
 
+	socket.on('server.cursor', function (data) {
+		// Cursor information is just relayed separately
+		rooms[data.room].cursorUpdate(players[socket.id].name, data.x, data.y);
+	});
     socket.on('disconnect', function () {
 		if (players[socket.id] !== undefined) {
 			removePlayerFromRoom(players[socket.id]);

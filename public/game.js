@@ -1,3 +1,5 @@
+const CURSOR_UPDATE_TICK = 50;
+
 const socket = io();
 let myName = '';
 let myId = '';
@@ -112,6 +114,9 @@ $(document).mouseup((e) => {
 	selectedCard = undefined;
 });
 
+// Cursor Updates
+
+let lastSentCursorTime = 0;
 $(document).mousemove((e) => {
 	$('.cursor').hide();
 	if (selectedCard !== undefined) {
@@ -119,7 +124,46 @@ $(document).mousemove((e) => {
 		$('.cursor')[0].style.top = (e.pageY - clickOffsetY) + 'px';
 		$('.cursor')[0].style.left = (e.pageX - clickOffsetX) + 'px';
 	}
+	const curTime = Date.now();
+	if (curTime > lastSentCursorTime + CURSOR_UPDATE_TICK) {
+		const rect = $('.fieldOverlay').offset();
+	
+		const x = e.pageX - rect.left;
+		const y = e.pageY - rect.top;
+		emit('server.cursor', {
+			x, y
+		});
+		lastSentCursorTime = curTime;
+	}
 });
+
+const cursorObjectMap = {};
+socket.on('client.cursor', function(data) {
+	const name = data.name;
+	if (!cursorObjectMap[name]) {
+		const element = $(`
+			<div class="otherPlayerCursor">${name}</div>
+		`);
+		$('.fieldOverlay').append(element);
+		cursorObjectMap[name] = {
+			element: element,
+			lastUpdate: 0
+		};
+	}
+	const now = Date.now();
+	cursorObjectMap[name].lastUpdate = now;
+	console.log(data.name, data.x, data.y);
+	cursorObjectMap[name].element[0].style.left = (data.x) + 'px';
+	cursorObjectMap[name].element[0].style.top = (data.y) + 'px';
+	Object.keys(cursorObjectMap).forEach(key => {
+		if (now - cursorObjectMap[key].lastUpdate > 1000) {
+			// 1 second without update we delete cursor 
+			cursorObjectMap[key].element[0].remove();
+			delete cursorObjectMap[key];
+		}
+	});
+});
+
 
 function onMouseDownOnCard(e) {
 	let newElem = selectedCard.clone();

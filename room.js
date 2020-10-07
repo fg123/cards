@@ -182,6 +182,18 @@ class Room {
         this.pushSpectatorState();
     }
 
+    cursorUpdate(name, x, y) {
+        this.players.forEach(player => {
+            if (player.name !== name) {
+                player.socket.emit('client.cursor', {
+                    name,
+                    x,
+                    y
+                });
+            }
+        });
+    }
+
     deal(n, names) {
         // TODO: verify names
         n = n || this.deck.length;
