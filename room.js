@@ -4,7 +4,7 @@ class Room {
         this.players = [];
         this.admin = undefined;
         
-        this.field = [];
+        this.field = {};
         this.hands = {};
         this.deck = [];
 
@@ -12,7 +12,7 @@ class Room {
     }
 
     reset() {
-        this.field = [];
+        this.field = {};
         this.hands = {};
         this.deck = [];
         this.pushSpectatorState();
@@ -41,23 +41,23 @@ class Room {
     }
 
     takeCard(name, id) {
-        if (id >= this.field.length) return;
+        if (!this.field[id]) return;
         if (this.hands[name] === undefined) {
             this.hands[name] = [];
         }
         this.hands[name].push(this.field[id].card);
-        this.field.splice(id, 1);
+        delete this.field[id];
         this.pushSpectatorState();
     }
 
     flipCard(id) {
-        if (id >= this.field.length) return;
+        if (!this.field[id]) return;
         this.field[id].facedown = !this.field[id].facedown;
         this.pushSpectatorState();
     }
 
     clearField() {
-        this.field = [];
+        this.field = {};
         this.pushSpectatorState();
     }
 
@@ -103,20 +103,29 @@ class Room {
         if (this.deck.length === 0) return;
         const card = this.deck.pop();
         let multiples = [];
-        for (let i = 0; i < this.field.length; i++) {
+        Object.keys(this.field).forEach(i => {
             if (this.field[i].y === 10) {
                 if ((this.field[i].x - 10) % 100 === 0) {
                     multiples.push((this.field[i].x - 10) / 100);
                 }
             }
-        }
+        });
         multiples.sort();
         let c = 0;
         for (let i = 0; i < multiples.length; i++) {
             if (c !== multiples[i]) break;
             c++;
         }
-        this.field.push({ card, x: (c * 100) + 10, y: 10, facedown: false, rotation: 0, lastTouch: Date.now() - this.startTime });
+        const newId = Date.now();
+        this.field[newId] = {
+            card, 
+            x: (c * 100) + 10, 
+            y: 10, 
+            facedown: false, 
+            rotation: 0, 
+            lastTouch: Date.now() - this.startTime,
+            id: newId
+        };
         this.pushSpectatorState();
     }
 
@@ -135,14 +144,23 @@ class Room {
         this.hands[to].push(this.deck.pop());
         this.pushSpectatorState();
     }
-
+    
     placeCard(name, card, location, facedown, rotation) {
         console.log('Placing card', card, 'from', name, 'to', location, 'facedown', facedown, 'rotation', rotation);
         if (this.hands[name]) {
             for (let i = 0; i < this.hands[name].length; i++) {
                 if (this.hands[name][i] === card) {
                     this.hands[name].splice(i, 1);
-                    this.field.push({ card, x: location.x, y: location.y, facedown, rotation, lastTouch: Date.now() - this.startTime });
+                    const newId = Date.now();
+                    this.field[newId] = {
+                        card, 
+                        x: location.x, 
+                        y: location.y, 
+                        facedown, 
+                        rotation, 
+                        lastTouch: Date.now() - this.startTime,
+                        id: newId
+                    };
                     this.pushSpectatorState();
                     break;
                 }
@@ -151,19 +169,19 @@ class Room {
     }
 
     flipOverPlayArea(x, y, width, height) {
-        for (let i = 0; i < this.field.length; i++) {
+        Object.keys(this.field).forEach(i => {
             const item = this.field[i];
             if (item.x >= x && item.x <= x + width && item.y >= y && item.y <= y + height) {
                 item.facedown = true;
             }
-        }
+        });
         this.pushSpectatorState();
     }
     
     hasCardAt(x, y) {
-        for (let i = 0; i < this.field.length; i++) {
+        Object.keys(this.field).forEach(i => {
             if (this.field[i].x === x && this.field[i].y === y && !this.field[i].facedown) return true;
-        }
+        });
         return false;
     }
 
@@ -175,7 +193,7 @@ class Room {
     }
 
     moveCard(id, location) {
-        if (id >= this.field.length) return;
+        if (!this.field[id]) return;
         this.field[id].x = location.x;
         this.field[id].y = location.y;
         this.field[id].lastTouch = Date.now() - this.startTime;
@@ -279,10 +297,7 @@ class Room {
                     playArea: player.playArea
                 };
             }),
-            field: this.field.slice(0).map(card => {
-                // TODO: remove data if facedown to prevent cheating
-                return card;
-            }),
+            field: this.field,
             deckCount: this.deck.length
         };
     }

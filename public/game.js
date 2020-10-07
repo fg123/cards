@@ -232,7 +232,7 @@ socket.on('client.spectator', function (data) {
 		}
 	}
 	
-	for (let i = 0; i < data.field.length; i++) {
+	Object.keys(data.field).forEach(i => {
 		let card = $(createCard(data.field[i].card, data.field[i].lastTouch, 0, i));
 		if (data.field[i].facedown) {
 			card = $(`<div class='card back' data-id='${i}' style='z-index: ${data.field[i].lastTouch};'>&nbsp;</div>`);
@@ -264,7 +264,7 @@ socket.on('client.spectator', function (data) {
         	return false;
 		});
 		$('.field').append(card);
-	}
+	});
 	// Save checkbox for deal cards
 	const checkMapping = {};
 	for (let i = 0; i < data.players.length; i++) {
