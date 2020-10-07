@@ -80,8 +80,18 @@ class Room {
                     const oldScore = player.score;
                     player.score = scoreToSet;
                     this.sendChat("Server", `${player.name} score updated from ${oldScore} to ${scoreToSet}`);
+                    this.pushSpectatorState();
                 }
-                this.pushSpectatorState();
+            }
+            else if (parts[0] === '/scoreall') {
+                const scoreToSet = parseInt(parts[1]);
+                if (scoreToSet) {
+                    this.players.forEach(p => {
+                        p.score = scoreToSet;
+                    });
+                    this.sendChat("Server", `Updated everyone's score to ${scoreToSet}`);
+                    this.pushSpectatorState();
+                }
             }
         }
         else {

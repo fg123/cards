@@ -3,7 +3,7 @@ class Player {
 		this.socket = socket;
 		this.name = name;
 		this.room = room;
-		this.score = 2;
+		this.score = 0;
 		this.playArea = {
 			top: "0",
 			left: "0"
