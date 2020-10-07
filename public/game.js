@@ -1,4 +1,4 @@
-const CURSOR_UPDATE_TICK = 10;
+const CURSOR_UPDATE_TICK = 32;
 
 const socket = io();
 let myName = '';
