@@ -40,6 +40,29 @@ class Room {
         this.pushSpectatorState();
     }
 
+    unlockPlayer(name) {
+        const player = this.getPlayer(name);
+        if (!player) return;
+        player.lockedCard = undefined;
+        console.log("Unlocked player", player.name);
+        this.pushSpectatorState();
+    }
+
+    tryLockCardForMove(name, id) {
+        const player = this.getPlayer(name);
+        if (!player) return false;
+        for (let i = 0; i < this.players.length; i++) {
+            const p = this.players[i];
+            if (p.name !== name && p.lockedCard === id) {
+                return false;
+            }
+        }
+        console.log("Locked card", id, "for", player.name);
+        player.lockedCard = id;
+        this.pushSpectatorState();
+        return true;
+    }
+
     takeCard(name, id) {
         if (!this.field[id]) return;
         if (this.hands[name] === undefined) {
@@ -69,6 +92,7 @@ class Room {
             });
         });
     }
+
     processChat(name, message) {
         if (message.length > 0 && message[0] === '/') {
             // Process Command
@@ -166,6 +190,7 @@ class Room {
                 }
             }
         }
+        this.unlockPlayer(name);
     }
 
     flipOverPlayArea(x, y, width, height) {
@@ -179,9 +204,10 @@ class Room {
     }
     
     hasCardAt(x, y) {
-        Object.keys(this.field).forEach(i => {
-            if (this.field[i].x === x && this.field[i].y === y && !this.field[i].facedown) return true;
-        });
+        const keys = Object.keys(this.field);
+        for (let i = 0; i < keys.length; i++) {
+            if (this.field[keys[i]].x === x && this.field[keys[i]].y === y && !this.field[keys[i]].facedown) return true;
+        }
         return false;
     }
 
@@ -189,14 +215,22 @@ class Room {
         while (this.hasCardAt(location.x, location.y)) {
             location.x += 30;
         }
+        console.log(location);
         this.placeCard(name, card, location, facedown);
     }
 
-    moveCard(id, location) {
+    moveCard(name, id, location) {
         if (!this.field[id]) return;
         this.field[id].x = location.x;
         this.field[id].y = location.y;
         this.field[id].lastTouch = Date.now() - this.startTime;
+        this.players.forEach(player => {
+            player.socket.emit('client.moveCard', { id, location });
+        });
+    }
+
+    unlock(name) {
+        this.unlockPlayer(name);
         this.pushSpectatorState();
     }
 
@@ -294,7 +328,8 @@ class Room {
                     state: player.state,
                     score: player.score,
                     cardCount: (this.hands[player.name] || []).length,
-                    playArea: player.playArea
+                    playArea: player.playArea,
+                    lockedCard: player.lockedCard
                 };
             }),
             field: this.field,

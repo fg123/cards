@@ -68,8 +68,12 @@ io.on('connection', function (socket) {
 		rooms[data.room].placeCard(players[socket.id].name, data.card, data.location, data.facedown, data.rotation);
 	});
 
+	socket.on('server.freeLock', function(data) {
+		rooms[data.room].unlock(players[socket.id].name);
+	});
+
 	socket.on('server.moveCard', function (data) {
-		rooms[data.room].moveCard(data.id, data.location);
+		rooms[data.room].moveCard(players[socket.id].name, data.id, data.location);
 	});
 
 	socket.on('server.reset', function (data) {
@@ -124,6 +128,14 @@ io.on('connection', function (socket) {
 		// Cursor information is just relayed separately
 		rooms[data.room].cursorUpdate(players[socket.id].name, data.x, data.y);
 	});
+
+	socket.on('server.lockForMove', function (data, callback) {
+		const success = rooms[data.room].tryLockCardForMove(players[socket.id].name, data.id);
+		if (success) {
+			callback();
+		}
+	});
+
     socket.on('disconnect', function () {
 		if (players[socket.id] !== undefined) {
 			removePlayerFromRoom(players[socket.id]);

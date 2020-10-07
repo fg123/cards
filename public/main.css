@@ -43,10 +43,6 @@ div.card {
 	box-shadow: 0 0 5px 1px #EEE;
 	cursor: default;
 	position: absolute;
-	-webkit-transition: all 100ms;
-	-moz-transition: all 100ms;
-	-o-transition: all 100ms;
-	transition: all 100ms;
 	top: 0px;
 }
 

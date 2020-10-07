@@ -8,6 +8,7 @@ class Player {
 			top: "0",
 			left: "0"
 		};
+		this.lockedCard = 0;
 	}
 }
 module.exports = Player;

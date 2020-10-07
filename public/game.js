@@ -1,4 +1,4 @@
-const CURSOR_UPDATE_TICK = 50;
+const CURSOR_UPDATE_TICK = 10;
 
 const socket = io();
 let myName = '';
@@ -12,6 +12,9 @@ let selectedCard = undefined;
 let clickOffsetX = 0;
 let clickOffsetY = 0;
 
+let cardsInField = {};
+
+
 let dropFaceDown = false;
 
 const errorQueue = [];
@@ -23,11 +26,16 @@ let myPlayArea = undefined;
 updateHand();
 $('#game').hide();
 
-function emit(endpoint, data) {
+function emit(endpoint, data, callback) {
     if (!data) data = {};
-    console.log('Emitting ' + endpoint);
-    data.room = roomId;
-    socket.emit(endpoint, data);
+    // console.log('Emitting ' + endpoint);
+	data.room = roomId;
+	if (callback) {
+		socket.emit(endpoint, data, callback);
+	}
+	else {
+		socket.emit(endpoint, data);
+	}
 }
 
 $(document).ready(() => {
@@ -105,6 +113,7 @@ $(document).mouseup((e) => {
 				id: parseInt(selectedCard.data('id')),
 				location: { x, y }
 			});
+			emit('server.freeLock', {});
 		}
 	}
 	else if (selectedCard !== undefined) {
@@ -118,14 +127,33 @@ $(document).mouseup((e) => {
 
 let lastSentCursorTime = 0;
 $(document).mousemove((e) => {
+	const curTime = Date.now();
+	let canTick = false;
+	if (curTime > lastSentCursorTime + CURSOR_UPDATE_TICK) {
+		canTick = true;
+	}
 	$('.cursor').hide();
 	if (selectedCard !== undefined) {
-		$('.cursor').show();
-		$('.cursor')[0].style.top = (e.pageY - clickOffsetY) + 'px';
-		$('.cursor')[0].style.left = (e.pageX - clickOffsetX) + 'px';
+		const id = parseInt(selectedCard.data('id'));
+		if (id !== -1) {
+			if (isMouseOverField(e) && canTick) {
+				// Not From Hand Update Movement
+				emit('server.moveCard', {
+					id,
+					location: {
+						x: e.pageX - $('.field').offset().left - clickOffsetX,
+						y: e.pageY - $('.field').offset().top - clickOffsetY,
+					}
+				});
+			}
+		}
+		else {
+			$('.cursor').show();
+			$('.cursor')[0].style.top = (e.pageY - clickOffsetY) + 'px';
+			$('.cursor')[0].style.left = (e.pageX - clickOffsetX) + 'px';
+		}
 	}
-	const curTime = Date.now();
-	if (curTime > lastSentCursorTime + CURSOR_UPDATE_TICK) {
+	if (canTick) {
 		const rect = $('.fieldOverlay').offset();
 	
 		const x = e.pageX - rect.left;
@@ -152,7 +180,6 @@ socket.on('client.cursor', function(data) {
 	}
 	const now = Date.now();
 	cursorObjectMap[name].lastUpdate = now;
-	console.log(data.name, data.x, data.y);
 	cursorObjectMap[name].element[0].style.left = (data.x) + 'px';
 	cursorObjectMap[name].element[0].style.top = (data.y) + 'px';
 	Object.keys(cursorObjectMap).forEach(key => {
@@ -164,27 +191,45 @@ socket.on('client.cursor', function(data) {
 	});
 });
 
-
-function onMouseDownOnCard(e) {
-	let newElem = selectedCard.clone();
-	if (dropFaceDown) {
-		newElem = $(`<div class='card back'>&nbsp;</div>`);
+socket.on('client.moveCard', function(data) {
+	const card = cardsInField[data.id];
+	if (card) {
+		card[0].style.left = (data.location.x) + 'px';
+		card[0].style.top = (data.location.y) + 'px';
 	}
-	$('.cursor').html(newElem);
-	
-	const rect = e.currentTarget.getBoundingClientRect();
-	
+});
+
+function onMouseDownOnCard(e, id) {
+	const isHand = id === -1;
+	let rect = e.currentTarget.getBoundingClientRect();
+	if (!isHand) {
+		// When we lock the card target doesn't exist anymore, it gets remade
+		const card = cardsInField[id];
+		if (card) {
+			rect = card[0].getBoundingClientRect();
+		}
+	}
+	console.log(rect);
+	console.log(e.pageX, e.pageY);
 	clickOffsetX = e.pageX - rect.left;
 	clickOffsetY = e.pageY - rect.top;
-
 	console.log(clickOffsetX, clickOffsetY);
+	if (isHand) {
+		let newElem = selectedCard.clone();
+		if (dropFaceDown) {
+			newElem = $(`<div class='card back'>&nbsp;</div>`);
+		}
+		$('.cursor').html(newElem);
 
-	newElem[0].style.top = '0px';
-	newElem[0].style.left = '0px';
-	$('.cursor')[0].style.top = (e.pageY - clickOffsetY) + 'px';
-	$('.cursor')[0].style.left = (e.pageX - clickOffsetX) + 'px';
-	$('.cursor').show();
-	selectedCard.hide();
+		newElem[0].style.top = '0px';
+		newElem[0].style.left = '0px';
+		$('.cursor')[0].style.top = (e.pageY - clickOffsetY) + 'px';
+		$('.cursor')[0].style.left = (e.pageX - clickOffsetX) + 'px';
+		$('.cursor').show();
+		selectedCard.hide();
+	} else {
+		$('.cursor').hide();
+	}
 }
 
 $('.playAreaSelect').change(() => {
@@ -219,8 +264,12 @@ socket.on('client.spectator', function (data) {
 			<br>
 	`);
 	$('.field').html('');
+	cardsInField = {};
+	
 	console.log(data);
 	myPlayArea = undefined;
+	players = data.players;
+	
 	for (let i = 0; i < data.players.length; i++) {
 		const div = $(`<div class="playArea" style="top: ${data.players[i].playArea.top}; left: ${data.players[i].playArea.left}">
 			<div class="name">${data.players[i].name}</div>
@@ -231,22 +280,26 @@ socket.on('client.spectator', function (data) {
 			div.append(`<button onclick='flipOverPlayArea()'>Flip Over</button>`);
 		}
 	}
-	
 	Object.keys(data.field).forEach(i => {
 		let card = $(createCard(data.field[i].card, data.field[i].lastTouch, 0, i));
 		if (data.field[i].facedown) {
 			card = $(`<div class='card back' data-id='${i}' style='z-index: ${data.field[i].lastTouch};'>&nbsp;</div>`);
 		}
+		cardsInField[i] = card;
 		card[0].style['transform-origin'] = 'top left';
-		// So it captures the right number in the closure.
 		card[0].style.position = "absolute";
 		card[0].style.top = data.field[i].y + "px";
 		card[0].style.left = data.field[i].x + "px";
+
 		card.mousedown((e) => {
 			if (e.which === 1) {
-				selectedCard = card;
-				dropFaceDown = data.field[i].facedown;
-				onMouseDownOnCard(e);
+				emit('server.lockForMove', {
+					id: i
+				}, () => {
+					selectedCard = card;
+					dropFaceDown = data.field[i].facedown;
+					onMouseDownOnCard(e, i);
+				});
 			}
 			else if (selectedCard === undefined) {
 				if (e.which === 2) {
@@ -261,7 +314,7 @@ socket.on('client.spectator', function (data) {
 				}
 			}
 			e.stopPropagation();
-        	return false;
+			return false;
 		});
 		$('.field').append(card);
 	});
@@ -596,7 +649,7 @@ function updateHand()
 			lastDown = Date.now();
 			dropFaceDown = e.which === 2;
 			selectedCard = card;
-			onMouseDownOnCard(e);
+			onMouseDownOnCard(e, -1);
 		});
 		card.contextmenu(function() { return false });
 		$('.me').append(card);
