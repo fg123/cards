@@ -116,7 +116,7 @@ $(document).mousemove((e) => {
 	$('.cursor').hide();
 	if (selectedCard !== undefined) {
 		$('.cursor').show();
-		$('.cursor')[0].style.top = (e.pageY - clickOffsetY)+ 'px';
+		$('.cursor')[0].style.top = (e.pageY - clickOffsetY) + 'px';
 		$('.cursor')[0].style.left = (e.pageX - clickOffsetX) + 'px';
 	}
 });

@@ -61,13 +61,32 @@ class Room {
         this.pushSpectatorState();
     }
 
-    chat(name, message) {
+    sendChat(name, message) {
         this.players.forEach(player => {
             player.socket.emit('client.chat', {
                 name,
                 message
             });
         });
+    }
+    processChat(name, message) {
+        if (message.length > 0 && message[0] === '/') {
+            // Process Command
+            const parts = message.split(' ');
+            if (parts[0] === '/score') {
+                const scoreToSet = parseInt(parts[1]);
+                const player = this.getPlayer(name);
+                if (player && scoreToSet) {
+                    const oldScore = player.score;
+                    player.score = scoreToSet;
+                    this.sendChat("Server", `${player.name} score updated from ${oldScore} to ${scoreToSet}`);
+                }
+                this.pushSpectatorState();
+            }
+        }
+        else {
+            this.sendChat(name, message);
+        }
     }
 
     dealOneToField() {
