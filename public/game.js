@@ -153,7 +153,7 @@ $(document).mousemove((e) => {
 			$('.cursor')[0].style.left = (e.pageX - clickOffsetX) + 'px';
 		}
 	}
-	if (canTick) {
+	if (canTick && myName) {
 		const rect = $('.fieldOverlay').offset();
 	
 		const x = e.pageX - rect.left;
