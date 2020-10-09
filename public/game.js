@@ -245,7 +245,9 @@ $('#chatTextbox').keydown(function(e) {
 });
 
 socket.on('client.chat', function(data) {
-	$('.chatBox').append(`${data.name}: ${data.message}\n`);
+	const date = new Date(data.timestamp);
+
+	$('.chatBox').append(`(${date.getHours()}:${date.getMinutes()}) ${data.name}: ${data.message}\n`);
 	$('.chatBox').scrollTop($('.chatBox')[0].scrollHeight);
 });
 

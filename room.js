@@ -8,6 +8,8 @@ class Room {
         this.hands = {};
         this.deck = [];
 
+        this.isDealing = false;
+
         this.startTime = Date.now();
     }
 
@@ -88,7 +90,8 @@ class Room {
         this.players.forEach(player => {
             player.socket.emit('client.chat', {
                 name,
-                message
+                message,
+                timestamp: Date.now()
             });
         });
     }
@@ -100,7 +103,7 @@ class Room {
             if (parts[0] === '/score') {
                 const scoreToSet = parseInt(parts[1]);
                 const player = this.getPlayer(name);
-                if (player && scoreToSet) {
+                if (player && !isNaN(scoreToSet)) {
                     const oldScore = player.score;
                     player.score = scoreToSet;
                     this.sendChat("Server", `${player.name} score updated from ${oldScore} to ${scoreToSet}`);
@@ -109,11 +112,21 @@ class Room {
             }
             else if (parts[0] === '/scoreall') {
                 const scoreToSet = parseInt(parts[1]);
-                if (scoreToSet) {
+                if (!isNaN(scoreToSet)) {
                     this.players.forEach(p => {
                         p.score = scoreToSet;
                     });
                     this.sendChat("Server", `Updated everyone's score to ${scoreToSet}`);
+                    this.pushSpectatorState();
+                }
+            }
+            else if (parts[0] === '/scoreadd') {
+                const scoreToAdd = parseInt(parts[1]);
+                const player = this.getPlayer(name);
+                if (player && !isNaN(scoreToAdd)) {
+                    const oldScore = player.score;
+                    player.score += scoreToAdd;
+                    this.sendChat("Server", `${player.name} score updated from ${oldScore} to ${player.score}`);
                     this.pushSpectatorState();
                 }
             }
@@ -251,6 +264,8 @@ class Room {
         n = n || this.deck.length;
         console.log('Dealing', n, 'cards to', names);
         if (n === 0) return;
+        if (this.isDealing) return;
+        this.isDealing = true;
         let i = 0; 
         let j = 0;
         const intervalID = setInterval(() => {
@@ -264,6 +279,7 @@ class Room {
             if (i >= names.length) i = 0;
             if (++j === n) {
                 console.log('Deal done!');
+                this.isDealing = false;
                 clearInterval(intervalID);
             }
         }, process.env.NODE_ENV === 'production' ? 200 : 10);
