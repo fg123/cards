@@ -209,11 +209,8 @@ function onMouseDownOnCard(e, id) {
 			rect = card[0].getBoundingClientRect();
 		}
 	}
-	console.log(rect);
-	console.log(e.pageX, e.pageY);
 	clickOffsetX = e.pageX - rect.left;
 	clickOffsetY = e.pageY - rect.top;
-	console.log(clickOffsetX, clickOffsetY);
 	if (isHand) {
 		let newElem = selectedCard.clone();
 		if (dropFaceDown) {
@@ -251,6 +248,8 @@ socket.on('client.chat', function(data) {
 	$('.chatBox').append(`${data.name}: ${data.message}\n`);
 	$('.chatBox').scrollTop($('.chatBox')[0].scrollHeight);
 });
+
+let lastCardMouseDown = 0;
 
 socket.on('client.spectator', function (data) {
 	$('.scoreboard .players').html(`
@@ -291,8 +290,17 @@ socket.on('client.spectator', function (data) {
 		card[0].style.top = data.field[i].y + "px";
 		card[0].style.left = data.field[i].x + "px";
 
+		
 		card.mousedown((e) => {
 			if (e.which === 1) {
+				if (Date.now() - lastCardMouseDown < 300) {
+					emit('server.takeCard', {
+						id: i
+					});
+					return;
+				}
+				
+				lastCardMouseDown = Date.now();
 				emit('server.lockForMove', {
 					id: i
 				}, () => {
