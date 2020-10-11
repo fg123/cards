@@ -61,6 +61,8 @@ class Room {
         }
         console.log("Locked card", id, "for", player.name);
         player.lockedCard = id;
+        
+        this.field[id].lastTouch = Date.now() - this.startTime;
         this.pushSpectatorState();
         return true;
     }
@@ -271,6 +273,7 @@ class Room {
         const intervalID = setInterval(() => {
             if (this.deck.length === 0) {
                 console.log('Deal zeroed!');
+                this.isDealing = false;
                 clearInterval(intervalID);
                 return;
             }
