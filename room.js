@@ -59,6 +59,7 @@ class Room {
                 return false;
             }
         }
+        if (!this.field[id]) return false;
         console.log("Locked card", id, "for", player.name);
         player.lockedCard = id;
         
