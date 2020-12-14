@@ -37,7 +37,7 @@ div.card {
 	width: 90px;
 	height: 130px;
 	border: 2px solid black;
-	background: #f2f7ff;	
+	background: #f2f7ff;
 	font-size: 20px;
 	line-height: 0.7em;
 	box-shadow: 0 0 5px 1px #EEE;
@@ -194,7 +194,6 @@ div.player {
 }
 
 div.scoreboard {
-	width: 20%;
 	position: absolute;
 	right: 10px;
 	top: 10px;
@@ -202,5 +201,6 @@ div.scoreboard {
 	color: #000;
 	border-radius: 10px;
 	padding: 8px;
-	z-index: 10;
+    z-index: 10;
+    min-height: 50%;
 }

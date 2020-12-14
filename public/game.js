@@ -155,7 +155,7 @@ $(document).mousemove((e) => {
 	}
 	if (canTick && myName) {
 		const rect = $('.fieldOverlay').offset();
-	
+
 		const x = e.pageX - rect.left;
 		const y = e.pageY - rect.top;
 		emit('server.cursor', {
@@ -184,7 +184,7 @@ socket.on('client.cursor', function(data) {
 	cursorObjectMap[name].element[0].style.top = (data.y) + 'px';
 	Object.keys(cursorObjectMap).forEach(key => {
 		if (now - cursorObjectMap[key].lastUpdate > 1000) {
-			// 1 second without update we delete cursor 
+			// 1 second without update we delete cursor
 			cursorObjectMap[key].element[0].remove();
 			delete cursorObjectMap[key];
 		}
@@ -266,11 +266,11 @@ socket.on('client.spectator', function (data) {
 	`);
 	$('.field').html('');
 	cardsInField = {};
-	
+
 	console.log(data);
 	myPlayArea = undefined;
 	players = data.players;
-	
+
 	for (let i = 0; i < data.players.length; i++) {
 		const div = $(`<div class="playArea" style="top: ${data.players[i].playArea.top}; left: ${data.players[i].playArea.left}">
 			<div class="name">${data.players[i].name}</div>
@@ -292,7 +292,7 @@ socket.on('client.spectator', function (data) {
 		card[0].style.top = data.field[i].y + "px";
 		card[0].style.left = data.field[i].x + "px";
 
-		
+
 		card.mousedown((e) => {
 			if (e.which === 1) {
 				if (Date.now() - lastCardMouseDown < 300) {
@@ -301,7 +301,7 @@ socket.on('client.spectator', function (data) {
 					});
 					return;
 				}
-				
+
 				lastCardMouseDown = Date.now();
 				emit('server.lockForMove', {
 					id: i
@@ -331,7 +331,7 @@ socket.on('client.spectator', function (data) {
 	// Save checkbox for deal cards
 	const checkMapping = {};
 	for (let i = 0; i < data.players.length; i++) {
-		if (document.getElementById(data.players[i].name + 'DealCheckbox') && 
+		if (document.getElementById(data.players[i].name + 'DealCheckbox') &&
 			!document.getElementById(data.players[i].name + 'DealCheckbox').checked) {
 			checkMapping[data.players[i].name] = "";
 		}
@@ -347,7 +347,7 @@ socket.on('client.spectator', function (data) {
 	dealCards = () => {
 		let dealTo = [];
 		for (let i = 0; i < data.players.length; i++) {
-			if (document.getElementById(data.players[i].name + 'DealCheckbox') && 
+			if (document.getElementById(data.players[i].name + 'DealCheckbox') &&
 				document.getElementById(data.players[i].name + 'DealCheckbox').checked) {
 				dealTo.push(data.players[i].name);
 			}
@@ -636,7 +636,7 @@ function updateHand()
 		let card = $(createCard(cardHand[i], i, i * 30, -1));
 		// So it captures the right number in the closure.
 		let lastDown = 0;
-		
+
 		card.mousedown((e) => {
 			if (Date.now() - lastDown < 300) {
 				if (!myPlayArea) {
@@ -676,3 +676,11 @@ function flipOverPlayArea() {
 			height: myPlayArea.height()
 	});
 }
+
+$(".scoreboard").mouseover(function(){
+  $(".showhide_panel").css("display", "block");
+});
+
+$(".scoreboard").mouseout(function(){
+  $(".showhide_panel").css("display", "none");
+});

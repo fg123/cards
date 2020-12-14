@@ -32,111 +32,113 @@
 			</div>
 		</div>
 		<div class="game" id="game">
-			<div class="scoreboard">
-				<div class="players">
+			<div class="scoreboard" >
+                <div class="showhide_panel" style="display:none" >
+                    <div class="players">
 
-				</div>
-				<div>
-					<!-- Rotation: 
-					<select class="rotation">
-						<option value="0">0&deg;</option>
-						<option value="90">90&deg;</option>
-						<option value="180">180&deg;</option>
-						<option value="270">270&deg;</option>
-					</select>
-					<br>
-					<br> -->
-					<button onclick="emit('server.reset')">Reset Server</button>
-					<button onclick="emit('server.clearField')">Clear Field</button>
-					<br>
-					<br>
-					<select id="deckSelect">
-						<option value="1dnj">1 Deck No Joker</option>
-						<option value="1d">1 Deck</option>
-						<option value="2d">2 Decks</option>
-						<option value="3d">3 Decks</option>
-						<option value="4d">4 Decks</option>
-						<option value="5d">5 Decks</option>
-					</select>
-					<input type="checkbox" id="shuffleCheckbox" value="shuffle" checked> Shuffle?
-					<button onclick="emit('server.setDeck', {
-						deck: DeckLookup[document.getElementById('deckSelect').value],
-						shuffle: document.getElementById('shuffleCheckbox').checked
-					})">Set Deck</button>
-					<br>
-					<br>
-					Deal <input type="number" min=0 placeholder="0" style="width: 50px" id="dealCount"> cards to:
-					<br>
-					<div class="dealPlayers">
+                    </div>
+                    <div>
+                        <!-- Rotation:
+                        <select class="rotation">
+                            <option value="0">0&deg;</option>
+                            <option value="90">90&deg;</option>
+                            <option value="180">180&deg;</option>
+                            <option value="270">270&deg;</option>
+                        </select>
+                        <br>
+                        <br> -->
+                        <button onclick="emit('server.reset')">Reset Server</button>
+                        <button onclick="emit('server.clearField')">Clear Field</button>
+                        <br>
+                        <br>
+                        <select id="deckSelect">
+                            <option value="1dnj">1 Deck No Joker</option>
+                            <option value="1d">1 Deck</option>
+                            <option value="2d">2 Decks</option>
+                            <option value="3d">3 Decks</option>
+                            <option value="4d">4 Decks</option>
+                            <option value="5d">5 Decks</option>
+                        </select>
+                        <input type="checkbox" id="shuffleCheckbox" value="shuffle" checked> Shuffle?
+                        <button onclick="emit('server.setDeck', {
+                            deck: DeckLookup[document.getElementById('deckSelect').value],
+                            shuffle: document.getElementById('shuffleCheckbox').checked
+                        })">Set Deck</button>
+                        <br>
+                        <br>
+                        Deal <input type="number" min=0 placeholder="0" style="width: 50px" id="dealCount"> cards to:
+                        <br>
+                        <div class="dealPlayers">
 
-					</div>
-					<button onclick="dealCards()">Deal Cards</button>
-					<br>
-					<button onclick="emit('server.dealOne')">Deal One Card To Field</button>
-					<br>
-					<button onclick="emit('server.dealRestToMe')">Deal Rest To Me</button>
-					<br>
-					<br>
-					Play Location:
-					<select class="playAreaSelect">
-						<option value="0,0">Top Left</option>
-						<option value="0,33.33">Top</option>
-						<option value="0,66.66">Top Right</option>
-						<option value="33.33,0">Left</option>
-						<option value="33.33,66.66">Right</option>
-						<option value="66.66,0">Bottom Left</option>
-						<option value="66.66,33.33">Bottom</option>
-						<option value="66.66,66.66">Bottom Right</option>
-					</select>
-					<br>
-					Sorting Method: 
-					<select class="sortingMethod">
-						<option value="tractor" selected>Tractor</option>
-						<option value="big2">Big 2</option>
-					</select>
-					<br>
-					Trump: 
-					<select class="trumpSuit">
-						<option value="N">No Suit</option>
-						<option value="D" selected>Diamonds</option>
-						<option value="C">Clubs</option>
-						<option value="H">Hearts</option>
-						<option value="S">Spades</option>
-					</select>
-					<br>
-					Trump Number: 
-					<select class="trumpNumber">
-						<option value="1" selected>A</option>
-						<option value="2">2</option>
-						<option value="3">3</option>
-						<option value="4">4</option>
-						<option value="5">5</option>
-						<option value="6">6</option>
-						<option value="7">7</option>
-						<option value="8">8</option>
-						<option value="9">9</option>
-						<option value="10">10</option>
-						<option value="11">J</option>
-						<option value="12">Q</option>
-						<option value="13">K</option>
-					</select>
-				</div>
-				<div class="chat">
-					<textarea readonly class="chatBox"></textarea>
-					<br>
-					<input type="text" placeholder="Chat..." id="chatTextbox" />
-					<button id="chatBtn">Send</button>
-					<br><br>
-					<p><code>/score [number]: set the score for yourself</code></p>
-					<p><code>/scoreall [number]: set the score for everyone</code></p>
-					<p><code>/scoreadd [number]: add score to yourself</code></p>
-				</div>
+                        </div>
+                        <button onclick="dealCards()">Deal Cards</button>
+                        <br>
+                        <button onclick="emit('server.dealOne')">Deal One Card To Field</button>
+                        <br>
+                        <button onclick="emit('server.dealRestToMe')">Deal Rest To Me</button>
+                        <br>
+                        <br>
+                        Play Location:
+                        <select class="playAreaSelect">
+                            <option value="0,0">Top Left</option>
+                            <option value="0,33.33">Top</option>
+                            <option value="0,66.66">Top Right</option>
+                            <option value="33.33,0">Left</option>
+                            <option value="33.33,66.66">Right</option>
+                            <option value="66.66,0">Bottom Left</option>
+                            <option value="66.66,33.33">Bottom</option>
+                            <option value="66.66,66.66">Bottom Right</option>
+                        </select>
+                        <br>
+                        Sorting Method:
+                        <select class="sortingMethod">
+                            <option value="tractor" selected>Tractor</option>
+                            <option value="big2">Big 2</option>
+                        </select>
+                        <br>
+                        Trump:
+                        <select class="trumpSuit">
+                            <option value="N">No Suit</option>
+                            <option value="D" selected>Diamonds</option>
+                            <option value="C">Clubs</option>
+                            <option value="H">Hearts</option>
+                            <option value="S">Spades</option>
+                        </select>
+                        <br>
+                        Trump Number:
+                        <select class="trumpNumber">
+                            <option value="1" selected>A</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">J</option>
+                            <option value="12">Q</option>
+                            <option value="13">K</option>
+                        </select>
+                    </div>
+                    <div class="chat">
+                        <textarea readonly class="chatBox"></textarea>
+                        <br>
+                        <input type="text" placeholder="Chat..." id="chatTextbox" />
+                        <button id="chatBtn">Send</button>
+                        <br><br>
+                        <p><code>/score [number]: set the score for yourself</code></p>
+                        <p><code>/scoreall [number]: set the score for everyone</code></p>
+                        <p><code>/scoreadd [number]: add score to yourself</code></p>
+                    </div>
+                </div>
 			</div>
 			<div class="fieldProperties fieldOverlay">
-				
+
 			</div>
 			<div class="fieldProperties field">
-				
+
 			</div>
 			<div class="me">
 				<div class="card back">
