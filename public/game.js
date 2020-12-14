@@ -70,6 +70,14 @@ $('#chatBtn').click(function() {
 	sendChat();
 });
 
+$('#btnScoreup').click(function() {
+	emit('server.chat', {message: "/scoreadd 1" });
+});
+
+$('#btnScoredown').click(function() {
+	emit('server.chat', {message: "/scoreadd -1" });
+});
+
 if (!isProduction) {
 	$('#nickname').val(Date.now());
 	$('#joinGameBtn').click();
