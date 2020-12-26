@@ -65,7 +65,7 @@ io.on('connection', function (socket) {
 	});
 
 	socket.on('server.placeCard', function (data) {
-		rooms[data.room].placeCard(players[socket.id].name, data.card, data.location, data.facedown, data.rotation);
+		rooms[data.room].placeCard(players[socket.id].name, data.id, data.location, data.facedown, data.rotation);
 	});
 
 	socket.on('server.freeLock', function(data) {
@@ -93,7 +93,7 @@ io.on('connection', function (socket) {
 	});
 
 	socket.on('server.placeCardPlayArea', function (data) {
-		rooms[data.room].placeCardPlayArea(players[socket.id].name, data.card, data.location, data.facedown);
+		rooms[data.room].placeCardPlayArea(players[socket.id].name, data.id, data.location, data.facedown);
 	});
 
 	socket.on('server.flipOverPlayArea', function (data) {

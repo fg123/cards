@@ -3,7 +3,7 @@ class Room {
         this.id = id;
         this.players = [];
         this.admin = undefined;
-        
+
         this.field = {};
         this.hands = {};
         this.deck = [];
@@ -11,6 +11,8 @@ class Room {
         this.isDealing = false;
 
         this.startTime = Date.now();
+
+        this.nextId = 1;
     }
 
     reset() {
@@ -62,7 +64,7 @@ class Room {
         if (!this.field[id]) return false;
         console.log("Locked card", id, "for", player.name);
         player.lockedCard = id;
-        
+
         this.field[id].lastTouch = Date.now() - this.startTime;
         this.pushSpectatorState();
         return true;
@@ -159,13 +161,13 @@ class Room {
             if (c !== multiples[i]) break;
             c++;
         }
-        const newId = Date.now();
+        const newId = this.nextId++;
         this.field[newId] = {
-            card, 
-            x: (c * 100) + 10, 
-            y: 10, 
-            facedown: false, 
-            rotation: 0, 
+            card,
+            x: (c * 100) + 10,
+            y: 10,
+            facedown: false,
+            rotation: 0,
             lastTouch: Date.now() - this.startTime,
             id: newId
         };
@@ -186,26 +188,26 @@ class Room {
         }
         this.hands[to].push({
             card: this.deck.pop(),
-            id: Date.now()
+            id: this.nextId++
         });
         this.pushSpectatorState();
     }
-    
-    placeCard(name, cardObj, location, facedown, rotation) {
-        console.log('Placing card', cardObj, 'from', name, 'to', location, 'facedown', facedown, 'rotation', rotation);
+
+    placeCard(name, cardId, location, facedown, rotation) {
         if (this.hands[name]) {
             for (let i = 0; i < this.hands[name].length; i++) {
-                if (this.hands[name][i].id === cardObj.id) {
-                    this.hands[name].splice(i, 1);
-                    this.field[cardObj.id] = {
-                        card: cardObj.card, 
-                        x: location.x, 
-                        y: location.y, 
-                        facedown, 
-                        rotation, 
-                        lastTouch: Date.now() - this.startTime,
-                        id: cardObj.id
+                if (this.hands[name][i].id === cardId) {
+                    console.log('Placing card', this.hands[name][i].card, 'from', name, 'to', location, 'facedown', facedown, 'rotation', rotation);
+                    this.field[cardId] = {
+                        card: this.hands[name][i].card,
+                        id: cardId,
+                        x: location.x,
+                        y: location.y,
+                        facedown,
+                        rotation,
+                        lastTouch: Date.now() - this.startTime
                     };
+                    this.hands[name].splice(i, 1);
                     this.pushSpectatorState();
                     break;
                 }
@@ -223,7 +225,7 @@ class Room {
         });
         this.pushSpectatorState();
     }
-    
+
     hasCardAt(x, y) {
         const keys = Object.keys(this.field);
         for (let i = 0; i < keys.length; i++) {
@@ -232,12 +234,12 @@ class Room {
         return false;
     }
 
-    placeCardPlayArea(name, card, location, facedown) {
+    placeCardPlayArea(name, cardId, location, facedown) {
         while (this.hasCardAt(location.x, location.y)) {
             location.x += 30;
         }
         console.log(location);
-        this.placeCard(name, card, location, facedown);
+        this.placeCard(name, cardId, location, facedown);
     }
 
     moveCard(name, id, location) {
@@ -274,7 +276,7 @@ class Room {
         if (n === 0) return;
         if (this.isDealing) return;
         this.isDealing = true;
-        let i = 0; 
+        let i = 0;
         let j = 0;
         const intervalID = setInterval(() => {
             if (this.deck.length === 0) {

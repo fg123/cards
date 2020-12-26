@@ -107,10 +107,10 @@ $(document).mouseup((e) => {
 		// const newX = 800 * Math.cos(rotationRad) - x * Math.cos(rotationRad) + y * Math.sin(rotationRad);
 		// const newY = 800 * Math.sin(rotationRad) - x * Math.sin(rotationRad) - y * Math.cos(rotationRad);
 		// console.log(x, y, newX, newY);
-		if (parseInt(selectedCard.data('id')) === -1) {
+		if (selectedCard.data('isonhand')) {
 			// Placing a card from your hand
 			emit('server.placeCard', {
-				card: selectedCard.data('card'),
+				id: parseInt(selectedCard.data('id')),
 				location: { x: x, y: y },
 				facedown: dropFaceDown
 				// rotation: (-rotation + 360) % 360
@@ -143,7 +143,7 @@ $(document).mousemove((e) => {
 	$('.cursor').hide();
 	if (selectedCard !== undefined) {
 		const id = parseInt(selectedCard.data('id'));
-		if (id !== -1) {
+		if (!selectedCard.data('isonhand')) {
 			if (isMouseOverField(e) && canTick) {
 				// Not From Hand Update Movement
 				emit('server.moveCard', {
@@ -155,7 +155,7 @@ $(document).mousemove((e) => {
 				});
 			}
 		}
-		else {
+		else { // onhand
 			$('.cursor').show();
 			$('.cursor')[0].style.top = (e.pageY - clickOffsetY) + 'px';
 			$('.cursor')[0].style.left = (e.pageX - clickOffsetX) + 'px';
@@ -290,7 +290,7 @@ socket.on('client.spectator', function (data) {
 		}
 	}
 	Object.keys(data.field).forEach(i => {
-		let card = $(createCard(data.field[i].card, data.field[i].lastTouch, 0, i));
+		let card = $(createCard(data.field[i].card, data.field[i].lastTouch, 0, i, false));
 		if (data.field[i].facedown) {
 			card = $(`<div class='card back' data-id='${i}' style='z-index: ${data.field[i].lastTouch};'>&nbsp;</div>`);
 		}
@@ -407,10 +407,10 @@ function showErrorIfNecessary() {
 	}
 }
 
-// createCard(cardValue, index, xPos) produces a string of the created card with
-//   the given values.
+// createCard(cardValue, index, xPos) produces a <div> string of the created card with
+//   the given values to display the card.
 // createCard: Str Num Num -> Str
-function createCard(cardValue, index, xPos, id)
+function createCard(cardValue, index, xPos, id, isOnHand)
 {
 	var cardClass = 'card ';
 	var cardDisplayNum = '';
@@ -484,6 +484,7 @@ function createCard(cardValue, index, xPos, id)
 		data-selected='0'
 		data-id='${id}'
 		data-card='${cardValue}'
+        data-isonhand='${isOnHand}'
 		style='z-index: ${index}; left: ${xPos}px'
 		class='${cardClass}'>
 			<div class='value'>${cardDisplayNum}</div>
@@ -522,7 +523,7 @@ function sortHandBig2() {
 		}
 		return val * 10 + suit;
 	}
-	cardHand.sort((a, b) => cardVal(a) - cardVal(b));
+	cardHand.sort((a, b) => cardVal(a.card) - cardVal(b.card));
 }
 
 function sortHandTractor()
@@ -538,32 +539,33 @@ function sortHandTractor()
 	let jokers = new Array();
 	for (var i = 0; i < cardHand.length; i++)
 	{
-		var c = cardHand[i];
-		if (c == 'JJ')
+		const card = cardHand[i];
+        const cardStr = card.card;
+		if (cardStr === 'JJ')
 		{
-			jokers.unshift(c);
+			jokers.unshift(card);
 		}
-		else if(c == 'J')
+		else if(cardStr === 'J')
 		{
-			jokers.push(c);
+			jokers.push(card);
 		}
 		else
 		{
-			var suit = c.slice(-1);
-			var val = parseInt(c.substring(0, c.length - 1), 10);
+			var suit = cardStr.slice(-1);
+			var val = parseInt(cardStr.substring(0, cardStr.length - 1), 10);
 			if (val == mainValue) // is a main value card
 			{
-				if (suit == mainSuit) mains.unshift(c);
-				else insertIntoBySuit(c, mains);
+				if (suit == mainSuit) mains.unshift(card);
+				else insertIntoBySuit(card, mains);
 			}
 			else
 			{
 				switch (suit)
 				{
-					case 'H': hearts = insertInto(c, hearts); break;
-					case 'D': diamonds = insertInto(c, diamonds); break;
-					case 'S': spades = insertInto(c, spades); break;
-					case 'C': clubs = insertInto(c, clubs); break;
+					case 'H': hearts = insertInto(card, hearts); break;
+					case 'D': diamonds = insertInto(card, diamonds); break;
+					case 'S': spades = insertInto(card, spades); break;
+					case 'C': clubs = insertInto(card, clubs); break;
 				}
 			}
 		}
@@ -595,14 +597,16 @@ function sortHandTractor()
 }
 // insertInto(card, lst) inserts the card into the list in order and produces
 //   the resulting list.
-// insertInto: Str Arr<Str> -> Arr<Str>
+// insertInto: CardObj Arr<Str> -> Arr<Str>
 function insertInto(card, lst)
 {
-	var cVal = parseInt(card.substring(0, card.length - 1), 10);
+    const cardStr = card.card;
+
+	var cVal = parseInt(cardStr.substring(0, cardStr.length - 1), 10);
 	var currVal;
 	for (var i = 0; i < lst.length; i++)
 	{
-		currVal = parseInt(lst[i], 10);
+		currVal = parseInt(lst[i].card, 10);
 		if (cVal == 1) { cVal = 14; } //to guarantee 1 is at the end
 		if (currVal == 1) { currVal = 14; } //to guarantee 1 is at the end
 		if (cVal >= currVal)
@@ -610,7 +614,6 @@ function insertInto(card, lst)
 			lst.splice(i, 0, card);
 			return lst;
 		}
-
 	}
 	lst.push(card);
 	return lst;
@@ -618,12 +621,13 @@ function insertInto(card, lst)
 
 // insertIntoBySuit(card, lst) inserts the card into the list in the same suit order and produces
 //   the resulting list.
-// insertInto: Str Arr<Str> -> Arr<Str>
+// insertInto: cardObj Arr<Str> -> Arr<Str>
 function insertIntoBySuit(card, lst)
 {
+    const cardStr = card.card;
 	for (let i = 0; i < lst.length; i++)
 	{
-		if (card.slice(-1) === lst[i].slice(-1))
+		if (cardStr.slice(-1) === lst[i].card.slice(-1))
 		{
 			lst.splice(i, 0, card);
 			return lst;
@@ -641,7 +645,7 @@ function updateHand()
 	$('.me').width(cardHand.length * 30 + 80);
 	$('.me').html('');
 	for (let i = 0; i < cardHand.length; i++) {
-		let card = $(createCard(cardHand[i], i, i * 30, -1));
+		let card = $(createCard(cardHand[i].card, i, i * 30, cardHand[i].id, true)); // true = on hand
 		// So it captures the right number in the closure.
 		let lastDown = 0;
 
@@ -655,7 +659,7 @@ function updateHand()
 				const playAreaOffset = myPlayArea.offset();
 
 				emit('server.placeCardPlayArea', {
-					card: card.data('card'),
+					id: parseInt(card.data('id')),
 					facedown: e.which === 2,
 					location: {
 						x: playAreaOffset.left - fieldOffset.left + 10,
