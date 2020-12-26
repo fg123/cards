@@ -73,7 +73,10 @@ class Room {
         if (this.hands[name] === undefined) {
             this.hands[name] = [];
         }
-        this.hands[name].push(this.field[id].card);
+        this.hands[name].push({
+            card: this.field[id].card,
+            id: this.field[id].id
+        });
         delete this.field[id];
         this.pushSpectatorState();
     }
@@ -181,25 +184,27 @@ class Room {
         if (this.hands[to] === undefined) {
             this.hands[to] = [];
         }
-        this.hands[to].push(this.deck.pop());
+        this.hands[to].push({
+            card: this.deck.pop(),
+            id: Date.now()
+        });
         this.pushSpectatorState();
     }
     
-    placeCard(name, card, location, facedown, rotation) {
-        console.log('Placing card', card, 'from', name, 'to', location, 'facedown', facedown, 'rotation', rotation);
+    placeCard(name, cardObj, location, facedown, rotation) {
+        console.log('Placing card', cardObj, 'from', name, 'to', location, 'facedown', facedown, 'rotation', rotation);
         if (this.hands[name]) {
             for (let i = 0; i < this.hands[name].length; i++) {
-                if (this.hands[name][i] === card) {
+                if (this.hands[name][i].id === cardObj.id) {
                     this.hands[name].splice(i, 1);
-                    const newId = Date.now();
-                    this.field[newId] = {
-                        card, 
+                    this.field[cardObj.id] = {
+                        card: cardObj.card, 
                         x: location.x, 
                         y: location.y, 
                         facedown, 
                         rotation, 
                         lastTouch: Date.now() - this.startTime,
-                        id: newId
+                        id: cardObj.id
                     };
                     this.pushSpectatorState();
                     break;
