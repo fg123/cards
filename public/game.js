@@ -14,6 +14,7 @@ let clickOffsetY = 0;
 
 let cardsInField = {};
 
+const cardsReady = new Set();
 
 let dropFaceDown = false;
 
@@ -78,6 +79,12 @@ $('#btnScoredown').click(function() {
 	emit('server.chat', {message: "/scoreadd -1" });
 });
 
+$('#btnPlayCards').click(function() {
+    cardsReady.forEach(function(id) {
+        placeCardPlayArea(id, false);
+    })
+});
+
 if (!isProduction) {
 	$('#nickname').val(Date.now());
 	$('#joinGameBtn').click();
@@ -98,7 +105,9 @@ function rotateField() {
 // $('.rotation').change((e) => { rotateField(); });
 
 $(document).mouseup((e) => {
-	if (selectedCard !== undefined && isMouseOverField(e)) {
+    if (selectedCard === undefined) return;
+    const id = parseInt(selectedCard.data('id'));
+	if (isMouseOverField(e)) {
 		const x = e.pageX - $('.field').offset().left - clickOffsetX;
 		const y = e.pageY - $('.field').offset().top - clickOffsetY;
 		// const rotation = parseInt($('.rotation').val());
@@ -110,21 +119,32 @@ $(document).mouseup((e) => {
 		if (selectedCard.data('isonhand')) {
 			// Placing a card from your hand
 			emit('server.placeCard', {
-				id: parseInt(selectedCard.data('id')),
+				id: id,
 				location: { x: x, y: y },
 				facedown: dropFaceDown
 				// rotation: (-rotation + 360) % 360
 			});
+            if (cardsReady.has(id)) cardsReady.delete(id);
 		} else {
 			// Placing a card picked up on the field
 			emit('server.moveCard', {
-				id: parseInt(selectedCard.data('id')),
+				id: id,
 				location: { x, y }
 			});
 			emit('server.freeLock', {});
 		}
 	}
-	else if (selectedCard !== undefined) {
+	else {
+        if (selectedCard.data('isonhand')) {
+            if(cardsReady.has(id)) {
+                cardsReady.delete(id);
+                selectedCard.css("top", "0px");
+            }
+            else {
+                cardsReady.add(id);
+                selectedCard.css("top", "-30px");
+            }
+        }
 		selectedCard.show();
 		$('.cursor').hide();
 	}
@@ -655,17 +675,8 @@ function updateHand()
 					console.error('Invalid play area!');
 					return;
 				}
-				const fieldOffset = $('.field').offset();
-				const playAreaOffset = myPlayArea.offset();
-
-				emit('server.placeCardPlayArea', {
-					id: parseInt(card.data('id')),
-					facedown: e.which === 2,
-					location: {
-						x: playAreaOffset.left - fieldOffset.left + 10,
-						y: playAreaOffset.top - fieldOffset.top + 100
-					}
-				})
+                const id = parseInt(card.data('id'));
+                placeCardPlayArea(id, e.which === 2);
 				return;
 			}
 			lastDown = Date.now();
@@ -674,8 +685,28 @@ function updateHand()
 			onMouseDownOnCard(e, -1);
 		});
 		card.contextmenu(function() { return false });
+
+        if(cardsReady.has(cardHand[i].id)) {
+            card.css("top", "-30px");
+        }
 		$('.me').append(card);
 	}
+}
+
+function placeCardPlayArea(id, facedown)
+{
+    const fieldOffset = $('.field').offset();
+    const playAreaOffset = myPlayArea.offset();
+
+    emit('server.placeCardPlayArea', {
+        id: id,
+        facedown: facedown,
+        location: {
+            x: playAreaOffset.left - fieldOffset.left + 10,
+            y: playAreaOffset.top - fieldOffset.top + 100
+        }
+    })
+    if (cardsReady.has(id)) cardsReady.delete(id);
 }
 
 function flipOverPlayArea() {
