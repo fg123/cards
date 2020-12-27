@@ -4,6 +4,7 @@ const socket = io();
 let myName = '';
 let myId = '';
 let players = [];
+let serverDeckCount = 0;
 let gamePlaying = false;
 let currentTurn = false;
 let cardHand = [];
@@ -78,6 +79,30 @@ $('#btnScoreup').click(function() {
 $('#btnScoredown').click(function() {
 	emit('server.chat', {message: "/scoreadd -1" });
 });
+
+$('#bntSetDealtCards').click(function() {
+
+    var dealCount = 0;
+    for (let i = 0; i < players.length; i++) {
+        if (document.getElementById(players[i].name + 'DealCheckbox') &&
+            document.getElementById(players[i].name + 'DealCheckbox').checked) {
+            dealCount++;
+        }
+    }
+
+    var serverDeckCountTemp = serverDeckCount;
+    var deckCountMod  = serverDeckCountTemp % dealCount;
+    if(deckCountMod === 0) deckCountMod = dealCount;
+    if(deckCountMod < 4) {
+        deckCountMod += dealCount;
+    }
+    serverDeckCountTemp -= deckCountMod;
+
+    if(serverDeckCountTemp < 0) serverDeckCountTemp = 0;
+
+    document.getElementById('dealCount').value = serverDeckCountTemp;
+});
+
 
 $('#btnPlayCards').click(function() {
     cardsReady.forEach(function(id) {
@@ -298,6 +323,7 @@ socket.on('client.spectator', function (data) {
 	console.log(data);
 	myPlayArea = undefined;
 	players = data.players;
+    serverDeckCount = data.deckCount
 
 	for (let i = 0; i < data.players.length; i++) {
 		const div = $(`<div class="playArea" style="top: ${data.players[i].playArea.top}; left: ${data.players[i].playArea.left}">
