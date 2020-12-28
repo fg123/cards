@@ -9,7 +9,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 	</head>
 	<body>
-		<div class="cursor"></div>
+        <div class="cursor"></div>
 		<div class="container" id="login">
 			<div class="row">
 				<div class="col-md-4"></div>
@@ -32,6 +32,11 @@
 			</div>
 		</div>
 		<div class="game" id="game">
+            <div class= "gifContainer" id="gifContainer">
+                <div id="gifPlayerName"></div>
+                <img class="gifPlayer" id="gifPlayer"/>
+            </div>
+
 			<div class="scoreboard" >
                 <div class="showhide_panel" style="display:none" >
                     <div class="players">
@@ -171,7 +176,8 @@
 					</div>
 				</div>
 			</div>
-		</div>
+        </div>
+
 		<script src="/prod.js"></script>
 		<script src="id.js"></script>
 		<script src="/static/jquery.min.js"></script>

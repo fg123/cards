@@ -138,6 +138,15 @@ class Room {
                     this.pushSpectatorState();
                 }
             }
+            else if (parts[0] === '/gif') {  // show image/gif at center: /gif http://abc.com/a.gif, /gif #window
+                let gifLink = parts[1];
+                if(gifLink == "#w") {
+                    gifLink = "https://media.giphy.com/media/ZAq2x1ywtUhxmaaUNG/giphy.gif";
+                }
+                this.players.forEach(player => {
+                    player.socket.emit('client.gif', name, gifLink);
+                });
+            }
         }
         else {
             this.sendChat(name, message);

@@ -431,6 +431,20 @@ socket.on('client.joinSuccess', function (pos) {
 	// rotateField();
 });
 
+socket.on('client.gif', function (name, link) {
+    const gifContainer = document.getElementById("gifContainer");
+	const gifPlayer = document.getElementById("gifPlayer");
+    const gifPlayerName = document.getElementById("gifPlayerName");
+    gifPlayer.src = link;
+    gifPlayerName.innerHTML = name;
+    gifContainer.style.display = "block";
+    setTimeout(()=> {
+        gifPlayer.src = "";
+        gifContainer.style.display = "none";
+    }, 5000);
+});
+
+
 socket.on('disconnect', function() {
 	// alert('Server disconnected.');
 	window.location.reload();
