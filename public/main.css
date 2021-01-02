@@ -180,7 +180,9 @@ div.playArea div.name {
 	font-size: 40px;
 	color: rgba(10, 10, 10, 0.2);
 	font-weight: bold;
-  	transform: translate(-50%, 0px);
+    transform: translate(-50%, 0px);
+    width: 100%;
+    text-align: center;
 }
 
 div.playArea button {

@@ -308,12 +308,6 @@ let lastCardMouseDown = 0;
 
 socket.on('client.spectator', function (data) {
 	$('.scoreboard .players').html(`
-			<b>Playing:</b>
-			<br>
-			${data.players
-                .map(p => p.name + " (" + p.score + ")")
-                .join('<br>')}
-			<br><br>
 			Server Deck Count: ${data.deckCount}
 			<br>
 	`);
@@ -327,7 +321,7 @@ socket.on('client.spectator', function (data) {
 
 	for (let i = 0; i < data.players.length; i++) {
 		const div = $(`<div class="playArea" style="top: ${data.players[i].playArea.top}; left: ${data.players[i].playArea.left}">
-			<div class="name">${data.players[i].name}</div>
+			<div class="name">${data.players[i].name + " (" + data.players[i].score + ")"}</div>
 		</div>`);
 		$('.field').append(div);
 		if (data.players[i].name === myName) {
