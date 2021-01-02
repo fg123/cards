@@ -134,6 +134,8 @@ class Room {
                 if (player && !isNaN(scoreToAdd)) {
                     const oldScore = player.score;
                     player.score += scoreToAdd;
+                    if(player.score <= 0) player.score = 13;
+                    if(player.score >= 14) player.score = 1;
                     this.sendChat("Server", `${player.name} score updated from ${oldScore} to ${player.score}`);
                     this.pushSpectatorState();
                 }
