@@ -475,6 +475,11 @@ function createCard(cardValue, index, xPos, id, isOnHand)
 		cardClass += 'back ';
 		cardSuit = '&#129313;';
 	}
+	else if (cardValue.startsWith("M-")) {
+		// Mahjong Card
+		cardSuit = MAHJONG_MAP[cardValue];
+		cardClass += "mahjong";
+	}
 	else if (cardValue == 'JJ') //big joker
 	{
 		cardDisplayNum = '<br><br>';
@@ -552,7 +557,10 @@ $('.trumpSuit').change(() => { updateHand(); });
 $('.trumpNumber').change(() => { updateHand(); });
 
 function sortHand() {
-	if ($('.sortingMethod').val() === 'tractor') {
+	if (cardHand.some(x => x.card.startsWith("M-"))) {
+		sortHandMahjong();
+	}
+	else if ($('.sortingMethod').val() === 'tractor') {
 		sortHandTractor();
 	}
 	else {
@@ -560,6 +568,12 @@ function sortHand() {
 	}
 }
 
+function sortHandMahjong() {
+	function cardVal(c) {
+		return Object.keys(MAHJONG_MAP).indexOf(c);
+	}
+	cardHand.sort((a, b) => cardVal(a.card) - cardVal(b.card));
+}
 function sortHandBig2() {
 	function cardVal(c) {
 		if (c === 'JJ') return 10000;
@@ -695,11 +709,15 @@ function insertIntoBySuit(card, lst)
 function updateHand()
 {
 	if (cardHand.length !== 0) sortHand();
+	let cardOffset = 30;
+	if (cardHand.some(x => x.card.startsWith("M-"))) {
+		cardOffset = 90;
+	}
 	console.log(cardHand);
-	$('.me').width(cardHand.length * 30 + 80);
+	$('.me').width(cardHand.length * cardOffset + 80);
 	$('.me').html('');
 	for (let i = 0; i < cardHand.length; i++) {
-		let card = $(createCard(cardHand[i].card, i, i * 30, cardHand[i].id, true)); // true = on hand
+		let card = $(createCard(cardHand[i].card, i, i * cardOffset, cardHand[i].id, true)); // true = on hand
 		// So it captures the right number in the closure.
 		let lastDown = 0;
 

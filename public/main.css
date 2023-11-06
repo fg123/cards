@@ -108,6 +108,10 @@ div.card.selected:not(.back) {
 	color: #000;
 }
 
+div.mahjong div.suit {
+	font-size: 120px!important;
+}
+
 div.game {
 	width: 100%;
 	height: 100%;
