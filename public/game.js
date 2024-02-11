@@ -110,6 +110,23 @@ $('#btnPlayCards').click(function() {
     })
 });
 
+$('#btnPlayCardsFaceDown').click(function() {
+	let x = 0;
+	const fieldOffset = $('.field').offset();
+    cardsReady.forEach(function(id) {
+		emit('server.placeCardPlayArea', {
+			id: id,
+			facedown: true,
+			location: {
+				x: (fieldOffset.left) + 550 + x,
+				y: (fieldOffset.top) + 350
+			}
+		})
+		x += 30;
+		if (cardsReady.has(id)) cardsReady.delete(id);
+    })
+});
+
 if (!isProduction) {
 	$('#nickname').val(Date.now());
 	$('#joinGameBtn').click();
@@ -772,10 +789,10 @@ function flipOverPlayArea() {
 	});
 }
 
-$(".scoreboard").mouseover(function(){
-  $(".showhide_panel").css("display", "block");
+$(".scoreboard").mouseenter(function() {
+  		$(".showhide_panel").css("display", "block");
 });
 
-$(".scoreboard").mouseout(function(){
-  $(".showhide_panel").css("display", "none");
+$(".scoreboard").mouseleave(function() {
+		$(".showhide_panel").css("display", "none")
 });

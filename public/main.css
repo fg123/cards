@@ -162,6 +162,7 @@ div.fieldProperties {
 	height: 800px;
 	background: url("images/texture.jpg") repeat;
     overflow: hidden;
+	border-radius: 10px;
 }
 
 div.chat textarea {
@@ -196,15 +197,25 @@ div.playArea button {
 	border-radius: 10px;
 }
 
-div.me {
-	width: 50%;
+div.meWrapper {
 	position: absolute;
-	margin-left: auto;
-	margin-right: auto;
 	left: 0;
 	right: 0;
 	bottom: 0px;
+	width: auto;
+	margin-left: auto;
+	margin-right: auto;
+	border-radius: 10px 10px 0px 0px;
+	background: peachpuff;
+	padding-top: 10px;
+}
+
+div.me {
 	height: 150px;
+	position: relative;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 50px;
 }
 
 div.player {
@@ -225,12 +236,6 @@ div.scoreboard {
     min-height: 50%;
 }
 
-div.playCard {
-	position: absolute;
-	margin-left: auto;
-	margin-right: auto;
-	left: 0;
-	right: 0;
-    bottom: 200px;
-    text-align: center;
+div.playCard{
+	text-align: center;
 }
