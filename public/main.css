@@ -110,6 +110,7 @@ div.card.selected:not(.back) {
 
 div.mahjong div.suit {
 	font-size: 120px!important;
+	font-family: "Segoe UI Symbol";
 }
 
 div.game {
