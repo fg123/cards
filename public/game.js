@@ -127,6 +127,10 @@ $('#btnPlayCardsFaceDown').click(function() {
     })
 });
 
+$('#btnDealOneToMe').click(function() {
+	emit('server.dealOneToMe');
+});
+
 if (!isProduction) {
 	$('#nickname').val(Date.now());
 	$('#joinGameBtn').click();
