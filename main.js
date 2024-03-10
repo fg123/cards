@@ -108,6 +108,10 @@ io.on('connection', function (socket) {
 		rooms[data.room].dealRestTo(players[socket.id].name);
 	});
 
+	socket.on('server.dealOneToMe', function (data) {
+		rooms[data.room].dealOne(players[socket.id].name);
+	});
+
 	socket.on('server.flipCard', function (data) {
 		rooms[data.room].flipCard(data.id);
 	});
