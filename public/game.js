@@ -429,8 +429,18 @@ socket.on('client.spectator', function (data) {
 });
 
 socket.on('client.hand', function (data) {
+	const oldIds = new Set(cardHand.map(x => x.id));
+	const newIds = new Set(data.map(x => x.id));
 	cardHand = data;
 	updateHand();
+	// find what IDs are new and flash 
+	newIds.difference(oldIds).forEach(id => {
+		const elem = $("div").find(`[data-id='${id}']`);
+		elem.css('background-color', 'gold');
+		setTimeout(() => {
+			elem.css('background-color', '#f2f7ff');
+		}, 1000);
+	})
 });
 
 socket.on('client.error', function (data) {

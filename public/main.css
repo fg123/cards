@@ -44,6 +44,7 @@ div.card {
 	cursor: default;
 	position: absolute;
 	top: 0px;
+	transition: background-color ease 0.5s;
 }
 
 div.card.display {
