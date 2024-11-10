@@ -10,7 +10,7 @@ class Room {
 
         this.isDealing = false;
 
-        this.startTime = Date.now();
+        this.seqNumber = 0;
 
         this.nextId = 1;
     }
@@ -65,7 +65,7 @@ class Room {
         console.log("Locked card", id, "for", player.name);
         player.lockedCard = id;
 
-        this.field[id].lastTouch = Date.now() - this.startTime;
+        this.field[id].lastTouch = this.seqNumber++;
         this.pushSpectatorState();
         return true;
     }
@@ -179,7 +179,7 @@ class Room {
             y: 10,
             facedown: false,
             rotation: 0,
-            lastTouch: Date.now() - this.startTime,
+            lastTouch: this.seqNumber++,
             id: newId
         };
         this.pushSpectatorState();
@@ -208,7 +208,8 @@ class Room {
         if (this.hands[name]) {
             for (let i = 0; i < this.hands[name].length; i++) {
                 if (this.hands[name][i].id === cardId) {
-                    console.log('Placing card', this.hands[name][i].card, 'from', name, 'to', location, 'facedown', facedown, 'rotation', rotation);
+                    const touchValue = (this.seqNumber++);
+                    console.log('Placing card', this.hands[name][i].card, 'from', name, 'to', location, 'facedown', facedown, 'rotation', rotation, 'touchValue', touchValue);
                     this.field[cardId] = {
                         card: this.hands[name][i].card,
                         id: cardId,
@@ -216,7 +217,7 @@ class Room {
                         y: location.y,
                         facedown,
                         rotation,
-                        lastTouch: Date.now() - this.startTime
+                        lastTouch: touchValue
                     };
                     this.hands[name].splice(i, 1);
                     this.pushSpectatorState();
@@ -257,7 +258,7 @@ class Room {
         if (!this.field[id]) return;
         this.field[id].x = location.x;
         this.field[id].y = location.y;
-        this.field[id].lastTouch = Date.now() - this.startTime;
+        this.field[id].lastTouch = this.seqNumber++;
         this.players.forEach(player => {
             player.socket.emit('client.moveCard', { id, location });
         });
@@ -283,6 +284,9 @@ class Room {
     deal(n, names) {
         // TODO: verify names
         n = n || this.deck.length;
+        if (n < 0) {
+            n = this.deck.length + n;
+        }
         console.log('Dealing', n, 'cards to', names);
         if (n === 0) return;
         if (this.isDealing) return;

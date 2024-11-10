@@ -381,12 +381,7 @@ socket.on('client.spectator', function (data) {
 				});
 			}
 			else if (selectedCard === undefined) {
-				if (e.which === 2) {
-					emit('server.takeCard', {
-						id: i
-					});
-				}
-				else if (e.which === 3) {
+				if (e.which === 3) {
 					emit('server.flipCard', {
 						id: i
 					});
