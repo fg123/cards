@@ -140,6 +140,10 @@ io.on('connection', function (socket) {
 		}
 	});
 
+	socket.on('server.setModule', function (data) {
+		rooms[data.room].setModule(data.module);
+	});
+
     socket.on('disconnect', function () {
 		if (players[socket.id] !== undefined) {
 			removePlayerFromRoom(players[socket.id]);

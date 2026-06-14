@@ -1,3 +1,6 @@
+const CardsServer = require('./cards_server.js');
+const MahjongServer = require('./mahjong_server.js');
+
 class Room {
     constructor (id) {
         this.id = id;
@@ -6,42 +9,36 @@ class Room {
 
         this.field = {};
         this.hands = {};
-        this.deck = [];
 
         this.isDealing = false;
 
         this.seqNumber = 0;
 
         this.nextId = 1;
+
+        this.module = new CardsServer(this);
     }
 
     reset() {
         this.field = {};
         this.hands = {};
-        this.deck = [];
+        if (this.module && this.module.reset) this.module.reset();
+        this.pushSpectatorState();
+    }
+
+    setModule(module) {
+        if (module === "cards") {
+            this.module = new CardsServer(this);
+        } else if (module === "mahjong") {
+            this.module = new MahjongServer(this);
+        }
         this.pushSpectatorState();
     }
 
     setDeck(deck, shuffle) {
-        // TODO: verify deck integrity
-        this.deck = deck;
-        if (shuffle) {
-            var currentIndex = this.deck.length, temporaryValue, randomIndex;
-
-            // While there remain elements to shuffle...
-            while (0 !== currentIndex) {
-
-                // Pick a remaining element...
-                randomIndex = Math.floor(Math.random() * currentIndex);
-                currentIndex -= 1;
-
-                // And swap it with the current element.
-                temporaryValue = this.deck[currentIndex];
-                this.deck[currentIndex] = this.deck[randomIndex];
-                this.deck[randomIndex] = temporaryValue;
-            }
+        if (this.module && this.module.setDeck) {
+            this.module.setDeck(deck, shuffle);
         }
-        this.pushSpectatorState();
     }
 
     unlockPlayer(name) {
@@ -156,52 +153,21 @@ class Room {
     }
 
     dealOneToField() {
-        if (this.deck.length === 0) return;
-        const card = this.deck.pop();
-        let multiples = [];
-        Object.keys(this.field).forEach(i => {
-            if (this.field[i].y === 10) {
-                if ((this.field[i].x - 10) % 100 === 0) {
-                    multiples.push((this.field[i].x - 10) / 100);
-                }
-            }
-        });
-        multiples.sort();
-        let c = 0;
-        for (let i = 0; i < multiples.length; i++) {
-            if (c !== multiples[i]) break;
-            c++;
+        if (this.module && this.module.dealOneToField) {
+            this.module.dealOneToField();
         }
-        const newId = this.nextId++;
-        this.field[newId] = {
-            card,
-            x: (c * 100) + 10,
-            y: 10,
-            facedown: false,
-            rotation: 0,
-            lastTouch: this.seqNumber++,
-            id: newId
-        };
-        this.pushSpectatorState();
     }
 
     dealRestTo(to) {
-        while (this.deck.length !== 0) {
-            this.dealOne(to);
+        if (this.module && this.module.dealRestTo) {
+            this.module.dealRestTo(to);
         }
-        this.pushSpectatorState();
     }
 
     dealOne(to) {
-        if (this.deck.length === 0) return;
-        if (this.hands[to] === undefined) {
-            this.hands[to] = [];
+        if (this.module && this.module.dealOne) {
+            this.module.dealOne(to);
         }
-        this.hands[to].push({
-            card: this.deck.pop(),
-            id: this.nextId++
-        });
-        this.pushSpectatorState();
     }
 
     placeCard(name, cardId, location, facedown, rotation) {
@@ -282,33 +248,9 @@ class Room {
     }
 
     deal(n, names) {
-        // TODO: verify names
-        n = n || this.deck.length;
-        if (n < 0) {
-            n = this.deck.length + n;
+        if (this.module && this.module.deal) {
+            this.module.deal(n, names);
         }
-        console.log('Dealing', n, 'cards to', names);
-        if (n === 0) return;
-        if (this.isDealing) return;
-        this.isDealing = true;
-        let i = 0;
-        let j = 0;
-        const intervalID = setInterval(() => {
-            if (this.deck.length === 0) {
-                console.log('Deal zeroed!');
-                this.isDealing = false;
-                clearInterval(intervalID);
-                return;
-            }
-            this.dealOne(names[i]);
-            i += 1;
-            if (i >= names.length) i = 0;
-            if (++j === n) {
-                console.log('Deal done!');
-                this.isDealing = false;
-                clearInterval(intervalID);
-            }
-        }, process.env.NODE_ENV === 'production' ? 200 : 10);
     }
 
     addPlayer (player) {
@@ -375,7 +317,8 @@ class Room {
                 };
             }),
             field: this.field,
-            deckCount: this.deck.length
+            deckCount: this.module ? this.module.getDeckCount() : 0,
+            module: this.module && this.module.constructor.name === 'MahjongServer' ? 'mahjong' : 'cards'
         };
     }
 

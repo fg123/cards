@@ -1,6 +1,7 @@
 const CURSOR_UPDATE_TICK = 32;
 
 const socket = io();
+const cardsClient = new CardsClient();
 let myName = '';
 let myId = '';
 let players = [];
@@ -223,8 +224,8 @@ $(document).mousemove((e) => {
 		}
 		else { // onhand
 			$('.cursor').show();
-			$('.cursor')[0].style.top = (e.pageY - clickOffsetY) + 'px';
-			$('.cursor')[0].style.left = (e.pageX - clickOffsetX) + 'px';
+			$('.cursor')[0].style.top = e.pageY - clickOffsetY + 'px';
+			$('.cursor')[0].style.left = e.pageX - clickOffsetX + 'px';
 		}
 	}
 	if (canTick && myName) {
@@ -321,7 +322,7 @@ $('#chatTextbox').keydown(function(e) {
 socket.on('client.chat', function(data) {
 	const date = new Date(data.timestamp);
 
-	$('.chatBox').append(`(${date.getHours()}:${date.getMinutes()}) ${data.name}: ${data.message}\n`);
+	$('.chatBox').append(`(${("0" + date.getHours()).slice(-2)}:${("0" + date.getMinutes()).slice(-2)}) ${data.name}: ${data.message}\n`);
 	$('.chatBox').scrollTop($('.chatBox')[0].scrollHeight);
 });
 
@@ -334,6 +335,21 @@ socket.on('client.spectator', function (data) {
 	`);
 	$('.field').html('');
 	cardsInField = {};
+
+    if (data.module === 'mahjong') {
+        $('#deckSelect').html('<option value="mahjong">Mahjong</option>');
+        $('#moduleSelect').val('mahjong');
+    } else {
+        $('#deckSelect').html(`
+            <option value="1dnj">1 Deck No Joker</option>
+            <option value="1d">1 Deck</option>
+            <option value="2d">2 Decks</option>
+            <option value="3d">3 Decks</option>
+            <option value="4d">4 Decks</option>
+            <option value="5d">5 Decks</option>
+        `);
+        $('#moduleSelect').val('cards');
+    }
 
 	console.log(data);
 	myPlayArea = undefined;
@@ -351,7 +367,7 @@ socket.on('client.spectator', function (data) {
 		}
 	}
 	Object.keys(data.field).forEach(i => {
-		let card = $(createCard(data.field[i].card, data.field[i].lastTouch, 0, i, false));
+		let card = $(cardsClient.createCard(data.field[i].card, data.field[i].lastTouch, 0, i, false));
 		if (data.field[i].facedown) {
 			card = $(`<div class='card back' data-id='${i}' style='z-index: ${data.field[i].lastTouch};'>&nbsp;</div>`);
 		}
@@ -360,7 +376,6 @@ socket.on('client.spectator', function (data) {
 		card[0].style.position = "absolute";
 		card[0].style.top = data.field[i].y + "px";
 		card[0].style.left = data.field[i].x + "px";
-
 
 		card.mousedown((e) => {
 			if (e.which === 1) {
@@ -447,8 +462,6 @@ socket.on('client.error', function (data) {
 socket.on('client.joinSuccess', function (pos) {
 	$('#game').show();
 	$('#login').hide();
-	// $(".rotation")[0].selectedIndex = pos % 4;
-	// rotateField();
 });
 
 socket.on('client.gif', function (name, link) {
@@ -487,248 +500,12 @@ function showErrorIfNecessary() {
 	}
 }
 
-// createCard(cardValue, index, xPos) produces a <div> string of the created card with
-//   the given values to display the card.
-// createCard: Str Num Num -> Str
-function createCard(cardValue, index, xPos, id, isOnHand)
-{
-	var cardClass = 'card ';
-	var cardDisplayNum = '';
-	var cardSuit = '';
-	if (cardValue == 'FD') // facedown
-	{
-		cardDisplayNum = '<br><br>';
-		cardClass += 'back ';
-		cardSuit = '&#129313;';
-	}
-	else if (cardValue.startsWith("M-")) {
-		// Mahjong Card
-		cardSuit = MAHJONG_MAP[cardValue];
-		cardClass += "mahjong";
-	}
-	else if (cardValue == 'JJ') //big joker
-	{
-		cardDisplayNum = '<br><br>';
-		cardClass += 'bJoker ';
-		cardSuit = '&#129313;';
-	}
-	else if (cardValue == 'J') //small joker
-	{
-		cardDisplayNum = '<br><br>';
-		cardClass += 'sJoker ';
-		cardSuit = '&#129313;';
-	}
-	else // regular card
-	{
-		var cLen = cardValue.length;
-		var cSuit = cardValue.slice(-1);
-		var cVal = cardValue.substring(0, cLen - 1);
-		if (cSuit == 'H')
-		{
-			cardSuit = '&hearts;';
-			cardClass += 'hearts ';
-		}
-		else if (cSuit == 'C')
-		{
-			cardSuit = '&clubs;';
-			cardClass += 'clubs ';
-		}
-		else if (cSuit == 'S')
-		{
-			cardSuit = '&spades;';
-			cardClass += 'spades ';
-		}
-		else if (cSuit == 'D')
-		{
-			cardSuit = '&diams;';
-			cardClass += 'diamonds ';
-		}
-
-		if (cVal == '11')
-		{
-			cardDisplayNum = 'J<br>' + cardSuit;
-		}
-		else if (cVal == '12')
-		{
-			cardDisplayNum = 'Q<br>' + cardSuit;
-		}
-		else if (cVal == '13')
-		{
-			cardDisplayNum = 'K<br>' + cardSuit;
-		}
-		else if (cVal == '1')
-		{
-			cardDisplayNum = 'A<br>' + cardSuit;
-		}
-		else
-		{
-			cardDisplayNum = cVal + '<br>' + cardSuit;
-		}
-	}
-	return `<div
-		data-selected='0'
-		data-id='${id}'
-		data-card='${cardValue}'
-        data-isonhand='${isOnHand}'
-		style='z-index: ${index}; left: ${xPos}px'
-		class='${cardClass}'>
-			<div class='value'>${cardDisplayNum}</div>
-			<div class='suit'>${cardSuit}</div>
-			<div class='valueBr'>${cardDisplayNum}</div>
-	</div>`;
-}
-
 $('.sortingMethod').change(() => { updateHand(); });
 $('.trumpSuit').change(() => { updateHand(); });
 $('.trumpNumber').change(() => { updateHand(); });
 
 function sortHand() {
-	if (cardHand.some(x => x.card.startsWith("M-"))) {
-		sortHandMahjong();
-	}
-	else if ($('.sortingMethod').val() === 'tractor') {
-		sortHandTractor();
-	}
-	else {
-		sortHandBig2();
-	}
-}
-
-function sortHandMahjong() {
-	function cardVal(c) {
-		return Object.keys(MAHJONG_MAP).indexOf(c);
-	}
-	cardHand.sort((a, b) => cardVal(a.card) - cardVal(b.card));
-}
-function sortHandBig2() {
-	function cardVal(c) {
-		if (c === 'JJ') return 10000;
-		else if (c === 'JJ') return 1000;
-		let val = parseInt(c.substring(0, c.length - 1), 10);
-		// Ace and 2 bigger than king
-		if (val === 1) val = 14;
-		else if (val === 2) val = 15;
-		let suit = 0;
-		switch (c.slice(-1)) {
-			case 'H': suit = 3; break;
-			case 'D': suit = 1; break;
-			case 'S': suit = 4; break;
-			case 'C': suit = 2; break;
-		}
-		return val * 10 + suit;
-	}
-	cardHand.sort((a, b) => cardVal(a.card) - cardVal(b.card));
-}
-
-function sortHandTractor()
-{
-	let mainSuit = $('.trumpSuit').val();
-	let mainValue = parseInt($('.trumpNumber').val(), 10);
-
-	let mains = new Array();
-	let hearts = new Array();
-	let spades = new Array();
-	let diamonds = new Array();
-	let clubs = new Array();
-	let jokers = new Array();
-	for (var i = 0; i < cardHand.length; i++)
-	{
-		const card = cardHand[i];
-        const cardStr = card.card;
-		if (cardStr === 'JJ')
-		{
-			jokers.unshift(card);
-		}
-		else if(cardStr === 'J')
-		{
-			jokers.push(card);
-		}
-		else
-		{
-			var suit = cardStr.slice(-1);
-			var val = parseInt(cardStr.substring(0, cardStr.length - 1), 10);
-			if (val == mainValue) // is a main value card
-			{
-				if (suit == mainSuit) mains.unshift(card);
-				else insertIntoBySuit(card, mains);
-			}
-			else
-			{
-				switch (suit)
-				{
-					case 'H': hearts = insertInto(card, hearts); break;
-					case 'D': diamonds = insertInto(card, diamonds); break;
-					case 'S': spades = insertInto(card, spades); break;
-					case 'C': clubs = insertInto(card, clubs); break;
-				}
-			}
-		}
-	}
-	cardHand = jokers.concat(mains);
-	if (mainSuit == 'N') // no suit
-	{
-		mainSuit = 'D'; // just for ordering purposes
-	}
-	switch (mainSuit)
-	{
-		case 'H':
-			cardHand = cardHand.concat(
-				hearts.concat(spades.concat(diamonds.concat(clubs))));
-			break;
-		case 'D':
-			cardHand = cardHand.concat(
-				diamonds.concat(clubs.concat(hearts.concat(spades))));
-			break;
-		case 'S':
-			cardHand = cardHand.concat(
-				spades.concat(diamonds.concat(clubs.concat(hearts))));
-			break;
-		case 'C':
-			cardHand = cardHand.concat(
-				clubs.concat(hearts.concat(spades.concat(diamonds))));
-			break;
-	}
-}
-// insertInto(card, lst) inserts the card into the list in order and produces
-//   the resulting list.
-// insertInto: CardObj Arr<Str> -> Arr<Str>
-function insertInto(card, lst)
-{
-    const cardStr = card.card;
-
-	var cVal = parseInt(cardStr.substring(0, cardStr.length - 1), 10);
-	var currVal;
-	for (var i = 0; i < lst.length; i++)
-	{
-		currVal = parseInt(lst[i].card, 10);
-		if (cVal == 1) { cVal = 14; } //to guarantee 1 is at the end
-		if (currVal == 1) { currVal = 14; } //to guarantee 1 is at the end
-		if (cVal >= currVal)
-		{
-			lst.splice(i, 0, card);
-			return lst;
-		}
-	}
-	lst.push(card);
-	return lst;
-}
-
-// insertIntoBySuit(card, lst) inserts the card into the list in the same suit order and produces
-//   the resulting list.
-// insertInto: cardObj Arr<Str> -> Arr<Str>
-function insertIntoBySuit(card, lst)
-{
-    const cardStr = card.card;
-	for (let i = 0; i < lst.length; i++)
-	{
-		if (cardStr.slice(-1) === lst[i].card.slice(-1))
-		{
-			lst.splice(i, 0, card);
-			return lst;
-		}
-	}
-	lst.push(card);
-	return lst;
+    cardHand = cardsClient.sortHand(cardHand);
 }
 
 // updateHand() updates the player's hand with the cards in cardHand
@@ -743,7 +520,7 @@ function updateHand()
 	$('.me').width(cardHand.length * cardOffset + 80);
 	$('.me').html('');
 	for (let i = 0; i < cardHand.length; i++) {
-		let card = $(createCard(cardHand[i].card, i, i * cardOffset, cardHand[i].id, true)); // true = on hand
+		let card = $(cardsClient.createCard(cardHand[i].card, i, i * cardOffset, cardHand[i].id, true)); // true = on hand
 		// So it captures the right number in the closure.
 		let lastDown = 0;
 
